@@ -2,6 +2,24 @@
 
 첨부 패키지 작성 당시 결과는 [TEST_REPORT_UPSTREAM](docs/TEST_REPORT_UPSTREAM.md)에 보존했다.
 
+## 실제 MFA 복구·공개 인증 검증 — 2026-09-14
+
+- 사용자 터미널에서 새 등록 및 현재 인증기 코드로 `mfa_verified` 성공. 실제 공개 HTTPS `/v1/me`의 admin·aal2, 관리자 요청 조회·Mac 노드 승인 성공을 확인했다. 미완료 등록 키는 검증 후 OS 저장소에서 제거됐다.
+- 기존 422의 정확한 제공자 원인은 재현하지 못했다. 미완료 등록을 재사용하고, 명시한 `--restart`로만 새 설정을 요청하며, 검증된 인증기는 유지하도록 수정했다. `--verify-now`가 같은 상태 폴더에서 바로 코드를 검증한다.
+- JSON·비대화형·리다이렉트 출력으로 등록 키가 나가지 않도록 실제 TTY를 요구한다. 알려진 MFA 오류만 정해진 안전한 문구로 안내하며 원문 제공자 오류를 노출하지 않는다.
+- 신규 MFA 회귀 18개를 포함한 core·제어 계층·실제 Blender·journal 검사: **207 passed, 12 subtests passed**. 기존 Starlette/anyio 사용 중단 경고 1건. 로그: ignored `work/publish-preflight-20260914/mfa-regression.log`.
+- Mac 키체인 잠금 해제 후 실제 OTP 세션 저장·원격 검증 성공. 공개 TLS 1.3·정상 인증서 검증·health 200 성공. 인증서 발급 대기와 키체인 잠금 상태는 아래의 과거 기록이다.
+- 새 Mac 노드에 Blender만 허용한 뒤 실제 Ed25519 인증·기존 중앙 heartbeat 성공. 실행 lease가 없는 노드의 입력 Storage 읽기 403, 비로그인 읽기 401 확인. 절차용 Blender 자가 점검을 AI 실행 증거로 승격하지 않는다.
+
+## 실제 운영 큐·노드 Storage — 2026-09-14
+
+- 새 CLI 가입·실제 OTP·TOTP·관리자 지정·Mac 노드 승인 이후, 기존 `public.cf_jobs/cf_tasks`에 실제 TripoSR 작업 1개와 CPU revision 2개를 제출했다. **22개 task 모두 done**. 원본 job `2402105a-649b-4c07-ae77-9819e43c27e7`, 새 노드 실행 revision `776428d5-af7d-4bce-be4a-4f0567ab1151`.
+- 원본 재구성은 기존 Windows 워커에서 TripoSR source `107cefdc244c39106fa830359024f6a2f1c78871`, model `5b521936b01fbe1890f6f9baed0254ab6351c04a`, mock=false. 현재 워커가 보고한 장비는 RTX 4070 Laptop이며 이번 운영 결과에는 별도 GPU peak 측정이 없다. 기존 4050 진단 수치를 대입하지 않는다.
+- 새 Mac Ed25519 노드는 revision의 Blender process(1.825초)와 preview 3개를 완료했다. 나머지 세 preview는 기존 Windows 워커가 같은 큐에서 완료했다. Mac Blender 5.2.1 LTS, 실제 mesh 4,850 triangles, GLB/FBX/metrics 및 6뷰 다운로드 해시 확인. 노드에는 사람 토큰·서비스 키를 전달하지 않았다.
+- 입력 업로드·유효 lease의 새 노드 출력 업로드·사용자 다운로드 성공. lease 없는 노드 입력 읽기 403, 비로그인 읽기 401. paused 노드 claim 403, active 복원 및 새 프로세스 재연결 성공. 영구 철회·운영 네트워크 장애 시험은 미완료다.
+- 실제 6뷰를 확인하니 원본 및 raw mesh revision에 의자 축 방향 문제가 남아 있었다. 기계 검사 hard_pass는 시각 승인이 아니므로 job 승인과 모델 release/ready 발급을 하지 않았다. 기존 Windows 0.2.2 실행기 전환 및 raw mesh 좌표 계약 전파는 남아 있다.
+- 실행·다운로드·권한 receipt는 ignored `work/publish-preflight-20260914/hosted-e2e-chair/`에 보관했다. Windows 신규 CLI/노드 인증 설치 증거와 별개다.
+
 ## 인증 저장소 복구 — 2026-09-14
 
 - 실제 사용자 OTP 검증 성공과 이메일 확인 시각을 Supabase에서 확인했다. 해당 검증 계정을 최초 관리자로 지정하고 감사 기록을 남겼다. TOTP·관리자 API 검증은 아직 완료 전이다.

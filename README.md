@@ -1,6 +1,8 @@
 # ClayFarm Work — 0.3.0.dev1 integration
 
-새 CLI의 승인 계정·Ed25519 노드 인증을 기존 ClayFarm의 **동일한 PostgreSQL 3D DAG와 private Storage**로 연결한 개발 저장소다. MyKnow 홈서버에 중앙 API와 운영 DB 통합을 적용했다. 공개 HTTPS와 실제 가입·승인·노드 작업 전체 검증은 진행 중이며, 전체 모델이 ready인 상태는 아니다.
+새 CLI의 승인 계정·Ed25519 노드 인증을 기존 ClayFarm의 **동일한 PostgreSQL 3D DAG와 private Storage**로 연결한 개발 저장소다. MyKnow 홈서버에 중앙 API와 운영 DB 통합을 적용했고 공개 HTTPS·실제 이메일 로그인·Mac 자격증명 저장을 확인했다. 실제 MFA·Mac 노드 승인과 새 CLI 제출 → 기존 Windows TripoSR → 새 Mac Blender → 결과 다운로드를 같은 운영 큐에서 확인했다. Windows 새 CLI 전환·전체 모델 검증은 남아 있다.
+
+**현재 사용자용 웹 화면은 없다. 서비스 주소는 CLI가 사용하는 API 서버이며, 웹 UI는 추후 작업이다.**
 
 - 중앙 모드는 `public.cf_jobs`, `cf_tasks`, `cf_attempts`, `cf_workers`를 사용한다. 작업을 새 큐에 복제하지 않는다.
 - 기존 `cf_rpc`와 새 gateway는 동일 dispatcher를 호출한다. 기존 등록과 저널을 보존한다.
@@ -60,7 +62,7 @@ py -3.12 -m venv .venv
 
 ## 중앙 CLI
 
-서비스 주소는 `https://clayfarm.myknow.xyz`다. 현재 DNS 제공 서버 간 반영 차이로 인증서 발급이 진행 중이므로, 공개 HTTPS 확인 전에는 아래 전체 접속 절차가 성공하지 않는다. 실제 적용 상태는 [DEPLOYMENT_STATUS](docs/DEPLOYMENT_STATUS.md)에 기록한다. 노드에 service key, DB 비밀번호, 다른 사람의 세션을 전달하지 않는다.
+API 주소는 `https://clayfarm.myknow.xyz`다. Let's Encrypt 인증서와 일반 HTTPS 접속을 확인했다. 실제 적용 상태는 [DEPLOYMENT_STATUS](docs/DEPLOYMENT_STATUS.md)에 기록한다. 노드에 service key, DB 비밀번호, 다른 사람의 세션을 전달하지 않는다.
 
 ### 가입·참여 신청
 
@@ -89,14 +91,15 @@ clayfarm auth login --email YOUR_EMAIL
 첫 관리자는 서버 운영자가 실제 이메일 검증이 끝난 Auth 계정을 지정한다. 이후 관리자 계정으로 로그인하고 MFA를 완료한다.
 
 ```sh
-clayfarm auth mfa-enroll
-clayfarm auth mfa-verify --factor FACTOR_UUID
+clayfarm auth mfa-enroll --verify-now
 clayfarm admin requests
 clayfarm admin approve REQUEST_UUID --grant creator-basic
 clayfarm admin users
 ```
 
-MFA 등록 정보는 본인 인증기에만 등록한다. 이미 등록했다면 재등록 없이 해당 factor로 검증한다. 관리자 승인은 현재 AAL2 세션이 필요하다.
+MFA 등록 키를 본인 인증기 앱에 추가한 뒤 같은 명령에서 현재 코드를 입력한다. 관리자 승인은 현재 AAL2 세션이 필요하다. 기존에 검증된 인증기가 있으면 등록을 바꾸지 않고 해당 인증기로 검증한다.
+
+미완료 등록 키는 사용자별 OS 자격증명 저장소에만 임시 보관하여 재실행 때 같은 키를 사용하고, 검증 성공 후 제거한다. 키를 잃어버린 이전 버전의 미완료 등록은 `clayfarm auth mfa-enroll --restart --verify-now`로 다시 준비한다. `--restart`는 검증된 인증기를 해제하지 않는다. 별도 단계로 진행하려면 `--verify-now`를 생략하고 출력된 `next` 명령을 사용한다. 이 명령은 같은 `--home`을 유지한다. 등록 키는 JSON·리다이렉트된 출력으로 내보내지 않는다.
 
 ### 워커 등록·실행
 

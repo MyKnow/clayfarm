@@ -3,6 +3,14 @@ import base64, json, time
 import httpx
 from .common import CFError, secure_url
 
+_SAFE_AUTH_ERRORS = {
+    'mfa_factor_name_conflict': 'An authenticator with this name already exists; rerun MFA enrollment to resume it',
+    'mfa_max_enrolled_factors': 'The authenticator limit has been reached; use an existing verified authenticator',
+    'mfa_verification_failed': 'Authenticator code was not accepted; use the current code from the matching authenticator',
+    'mfa_challenge_expired': 'Authenticator challenge expired; retry MFA verification with a current code',
+    'mfa_ip_address_mismatch': 'Complete authenticator setup using the same network connection',
+}
+
 class SupabaseAuth:
     def __init__(self,url,key,client=None):
         self.url=secure_url(url); self.key=key
@@ -18,7 +26,13 @@ class SupabaseAuth:
         if token: headers["Authorization"]="Bearer "+token
         try: r=self.client.request(method,self.url+"/auth/v1"+path,json=body,headers=headers)
         except httpx.HTTPError as e: raise CFError("auth_unreachable","Authentication service unreachable",503) from e
-        if r.status_code>=400: raise CFError("auth_rejected",f"Authentication request rejected ({r.status_code})",401 if r.status_code in (400,401,403) else 503)
+        if r.status_code>=400:
+            try: details=r.json()
+            except ValueError: details={}
+            code=details.get('error_code') if isinstance(details,dict) else None
+            if isinstance(code,str) and code in _SAFE_AUTH_ERRORS:
+                raise CFError(code,_SAFE_AUTH_ERRORS[code],r.status_code)
+            raise CFError("auth_rejected",f"Authentication request rejected ({r.status_code})",401 if r.status_code in (400,401,403) else r.status_code if r.status_code in (422,429) else 503)
         return r.json() if r.content else {}
     def otp(self,email,signup=False):
         return self.call("POST","/otp",{"email":email,"create_user":signup})

@@ -5,9 +5,9 @@
 | 영역 | 현재 구현과 증거 | 남은 경계 |
 |---|---|---|
 | 저장소 | 첨부 SHA256SUMS 79개 확인, Mac 기존 소스 우선 반영, Windows/Mac 원본 15개가 동일 origin/dev revision과 일치. 사용방법·Unity 규칙·서버 실행 패키지를 포함한 로컬 main 최초 커밋 | GitHub Private 생성·push 완료. [배포 상태](DEPLOYMENT_STATUS.md) |
-| 중앙 큐 | 새 승인 계정과 서명 노드가 기존 public.cf_jobs/tasks/attempts/workers와 동일 dispatcher 사용. 양방향 old/new claim, 동시 claim, lease/fencing, revocation 시험 | 운영 migration 적용 및 기존 데이터 보존 확인. 실제 계정/노드 E2E는 별도 |
-| 승인·인증 | OTP/Supabase adapter, AAL2 관리자 승인, 사용자·노드 철회, body/query/nonce Ed25519 검증, SQL 현재 승인 재확인. 실제 관리자 이메일·OTP 검증과 최초 관리자 지정 완료 | Mac login 키체인 잠금으로 세션 저장 실패. 저장소 사전 점검 추가. 본인 잠금 해제·새 로그인·MFA 및 전체 승인 흐름은 미완료 |
-| Storage | 실제 Storage API v1.60.4의 private bucket에서 bytes/hash/멱등 업로드/다운로드 확인. 입력·현재 attempt 출력으로 권한 제한 | hosted private 객체 서버 읽기 성공. 사용자/노드 scope E2E 및 새 proxy byte-range/TUS 재개는 미완료 |
+| 중앙 큐 | 새 승인 계정과 서명 노드가 기존 public.cf_jobs/tasks/attempts/workers와 동일 dispatcher 사용. 양방향 old/new claim, 동시 claim, lease/fencing, revocation 시험 | 운영 migration·기존 데이터 보존 및 실제 새 사용자 제출/기존 Windows 실행/새 Mac 서명 노드 처리/다운로드 확인 |
+| 승인·인증 | 실제 관리자 이메일·OTP·Mac 키체인·공개 HTTPS·TOTP·AAL2 관리자 조회 및 Mac 노드 승인·서명 인증 성공. AAL1 관리자 접근 거부 확인 | MFA 등록 재개 및 한 명령 내 검증 경로 추가. 새 Mac 서명 노드 작업·일시 중지/재활성화 검증 완료. 영구 철회·Windows 새 CLI 전환은 미완료 |
+| Storage | 실제 Storage API v1.60.4의 private bucket에서 bytes/hash/멱등 업로드/다운로드 확인. 입력·현재 attempt 출력으로 권한 제한 | hosted 사용자 입력·새 노드 attempt 출력·사용자 다운로드 bytes/hash 성공. lease 없는 노드 403 확인. byte-range/TUS 재개·운영 장애 검증은 미완료 |
 | 3D 실행 | 기존 실행기를 새 노드 인증에 연결. Windows TripoSR 고정 소스/가중치 CUDA 추론·CPU mesh extraction 온라인/새 오프라인 실행 성공 | SF3D gated 접근 차단. Windows 새 CLI/운영 큐 end-to-end 미검증 |
 | 축 계약 | 실제 생성 의자가 누워도 기존 hard_pass가 통과하는 결함 재현. 공식 viewer 변환을 적용한 exact executor로 Windows 재구성·process·6뷰·legacy 호환·CPU revision 통과 | 의미상 앞뒤와 색감은 caller 시각 검토 필요. hard_pass는 시각 승인 아님 |
 | Unity 임포트 규칙 (2026-09-14) | ClayFarm FBX Medium 고정, 세 기능 미사용으로 명시 분류한 StaticMeshes만 BlendShapes/Rig/Animation 끄기. [적용 규칙](UNITY_IMPORT_POLICY.md), Mac Unity 6000.3.22f1 실제 임포트 8개 시나리오 통과 | 게임 프로젝트 설치, 실제 에셋 시각/로딩 품질 및 Windows Unity 검증은 별도 |
@@ -23,14 +23,14 @@
 | 모델 준비 상태 | 환경 fingerprint·adapter/profile digest·artifact hash·메모리 증거 없거나 변경되면 광고/plan ready 차단 | 신경망 signed release 미발행 |
 | 설치 | Mac 제어 계층 신규 가상환경 설치 및 해시 lock, Windows 제어 계층 lock 생성, Mac 모델 진단 lock | Windows 신규 환경 설치 미검증 |
 | 복구 | task/attempt/outbox 보존, 현재 lease만 publish. Mac OOM 후 GPU 재사용. Windows 설치 빌드 복구 및 실제 CUDA 제한 OOM 후 메모리 회수·정상 모델 재실행 통과 | 운영 장애·장시간 부하·다중 입력의 자원 최대값 미검증 |
-| 운영 전환 | 최신 dispatcher hash 불일치 시 변경 전 중단하는 migration, 전용 gateway 권한, 문서화. 2026-09-14 사용자 배포 요청 접수 및 운영 dispatcher hash 일치 확인 | 홈서버 API 배포 및 DB 복원 시험 완료. DNS/TLS·실제 OTP/MFA·기존 legacy 계정 cutover 필요 |
-| 홈서버 실행 패키지 (2026-09-14) | Linux amd64 서버 이미지와 wheel hash lock, loopback Compose, DB/farm/RPC readiness 검사. 실제 Linux API+PostgreSQL 시작·비로그인 401·DB 장애 시 unready 확인 | 홈서버 healthy·실제 DB TLS/권한·hosted Storage 서버 읽기 확인. 공개 HTTPS와 사용자 E2E는 별도 |
+| 운영 전환 | 최신 dispatcher hash 불일치 시 변경 전 중단하는 migration, 전용 gateway 권한, 문서화. 운영 migration·홈서버 API·공개 TLS·DB 복원 시험 완료 | 실제 MFA·Mac 노드 승인 완료. 동일 큐 실제 작업 완료. 기존 legacy 계정 cutover·시각 품질·장애 검증 필요 |
+| 홈서버 실행 패키지 (2026-09-14) | Linux amd64 서버 이미지와 wheel hash lock, loopback Compose, DB/farm/RPC readiness 검사. 홈서버 healthy·공개 HTTPS·실제 DB TLS/권한·hosted Storage 서버 읽기 확인 | 사용자/노드 전체 E2E는 별도 |
 
 ## 하나의 큐라는 의미
 
 중앙 API에 승인된 계정은 기존 `public.cf_jobs`에 제출한다. 기존 워커가 그 작업을 claim할 수 있고, 새 노드도 기존 caller가 제출한 작업을 claim한다. 둘은 동일 task/attempt 상태를 본다. 중앙 모드에서는 개발용 `cf_control.jobs` 경로를 실행할 수 없다.
 
-2026-09-14 운영 DB에 migration을 적용하고 MyKnow 홈서버에 gateway를 배포했다. 운영 서버에 새 CLI를 연결한 실제 Auth/CUDA/Storage end-to-end 성공은 별도 완료 조건이다.
+2026-09-14 운영 DB에 migration을 적용하고 MyKnow 홈서버에 gateway를 배포했다. 실제 Auth·새 CLI 제출·기존 Windows TripoSR·새 Mac 노드 Blender·Storage 결과 다운로드를 같은 운영 큐에서 확인했다. Windows 워커는 기존 인증이며 새 CLI 전환과 모델 전체 검증은 미완료다. 실제 legacy 결과 및 raw mesh revision의 의자 축 방향이 잘못돼 시각 승인하지 않았다. 자세한 작업 ID와 경계는 [배포 상태](DEPLOYMENT_STATUS.md)를 따른다.
 
 ## 하드웨어 판정
 

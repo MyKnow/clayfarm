@@ -21,7 +21,8 @@ def parser():
         x=a.add_parser(name);x.add_argument("--email");x.add_argument("--send-only",action="store_true")
     x=a.add_parser("verify");x.add_argument("--email");x.add_argument("--code-stdin",action="store_true")
     a.add_parser("whoami");a.add_parser("logout");a.add_parser("check-vault")
-    x=a.add_parser("mfa-enroll");x=a.add_parser("mfa-verify");x.add_argument("--factor",required=True);x.add_argument("--code-stdin",action="store_true")
+    x=a.add_parser("mfa-enroll");x.add_argument("--restart",action="store_true");x.add_argument("--verify-now",action="store_true")
+    x=a.add_parser("mfa-verify");x.add_argument("--factor",required=True);x.add_argument("--code-stdin",action="store_true")
     a=s.add_parser("access").add_subparsers(dest="action",required=True)
     x=a.add_parser("request");x.add_argument("--reason",default="Asset production");x.add_argument("--grant",choices=["creator-basic","experimental"],default="creator-basic");x.add_argument("--idempotency-key")
     a.add_parser("status")
@@ -261,17 +262,27 @@ def dispatch(a):
             c.call("POST","/v1/sessions/revoke",{})
             c.auth().logout(token);c.vault.delete("human-session");return {"signed_out":True,"server_revoked":True}
         if act=="mfa-enroll":
-            if a.no_input or a.json:raise CFError("interactive_secret_required","Enroll interactively; TOTP secrets are not emitted in JSON logs")
-            factor=c.auth().factor_enroll(c.session()["access_token"])
-            print("Authenticator setup secret (do not share): "+factor["totp"]["secret"],file=sys.stderr)
-            return {"factor_id":factor["id"],"next":"clayfarm auth mfa-verify --factor "+factor["id"]}
+            if a.no_input or a.json or not sys.stdin.isatty() or not sys.stderr.isatty():
+                raise CFError("interactive_secret_required","Enroll in an interactive terminal; TOTP secrets are not emitted in redirected or JSON logs")
+            from .mfa import prepare_enrollment, verify_factor
+            factor=prepare_enrollment(c,restart=a.restart)
+            if factor['secret']:
+                print("Authenticator setup secret (do not share): "+factor['secret'],file=sys.stderr)
+                print("Add this key to your authenticator app before entering its code.",file=sys.stderr)
+            elif factor['status']=='pending':
+                print("Pending setup exists. Use its authenticator code, or rerun with --restart if its setup key was lost.",file=sys.stderr)
+            if a.verify_now:
+                code=ask("Authenticator code",a,True)
+                return verify_factor(c,factor['factor_id'],code)
+            import shlex, subprocess
+            next_args=['clayfarm','--home',str(home),'auth','mfa-verify','--factor',factor['factor_id']]
+            next_command=subprocess.list2cmdline(next_args) if os.name=='nt' else shlex.join(next_args)
+            return {"status":factor['status'],"factor_id":factor['factor_id'],"next":next_command}
         if act=="mfa-verify":
             c.vault.check_writable()
             code=sys.stdin.readline().strip() if a.code_stdin else ask("Authenticator code",a,True)
-            session=c.auth().factor_verify(c.session()["access_token"],a.factor,code)
-            if "access_token" not in session:raise CFError("mfa_session_missing","MFA did not return a session")
-            session["expires_at"]=session.get("expires_at",time.time()+session.get("expires_in",3600));c.vault.put("human-session",session)
-            return {"status":"mfa_verified"}
+            from .mfa import verify_factor
+            return verify_factor(c,a.factor,code)
     if g=="access":
         if act=="status":return c.call("GET","/v1/requests")
         return c.call("POST","/v1/requests",{"kind":"access","payload":{"reason":a.reason,"requested_grant":a.grant},"idempotency_key":a.idempotency_key or uid()})
