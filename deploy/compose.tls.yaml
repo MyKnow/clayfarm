@@ -1,0 +1,8 @@
+# Use with compose.yaml when the database requires a private CA root.
+services:
+  api:
+    volumes:
+      - type: bind
+        source: ${CLAYFARM_DATABASE_CA:?Set the verified database CA certificate path}
+        target: /run/certs/database-ca.crt
+        read_only: true

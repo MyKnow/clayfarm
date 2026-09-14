@@ -2,7 +2,7 @@
 
 ## 현재 적용 경계
 
-기존 Supabase dispatcher를 확인한 뒤 작성한 마이그레이션과 gateway다. 운영 DB/Storage/SMTP에 쓰지 않았다. 2026-09-14 사용자가 MyKnow 홈서버 배포를 요청했으며, 현재 적용 여부와 남은 조건은 [DEPLOYMENT_STATUS](DEPLOYMENT_STATUS.md)를 따른다. 접근 권한 확보, 백업 및 아래 점검 후 적용한다. 첨부 문서 자체는 운영 변경 권한이 아니다.
+기존 Supabase dispatcher를 확인한 뒤 작성한 마이그레이션과 gateway다. 2026-09-14 사용자 요청에 따라 운영 DB migration, MyKnow 홈서버 API 및 Resend OTP 메일 설정을 적용했다. 현재 접속 가능 여부와 실제 사용자 검증의 남은 조건은 [DEPLOYMENT_STATUS](DEPLOYMENT_STATUS.md)를 따른다. 첨부 문서 자체는 운영 변경 권한이 아니다.
 
 기존 프로젝트 DB와 `clayfarm` bucket을 사용한다. 새 프로젝트/farm/노드용 Auth 계정을 만들지 않는다. `cf_control.jobs`는 원본 개발 모드 호환을 위해 존재할 수 있지만 중앙 모드의 submit/claim/조회에 사용하지 않는다.
 
@@ -33,7 +33,7 @@ Storage service key는 RLS를 우회한다. 따라서 gateway가 PostgreSQL 승�
 
 `python scripts/test_central.py --real-storage --blender /absolute/path/to/blender`는 실제 PostgreSQL 17과 Storage API v1.60.4를 사용한다. 사람 인증과 재구성 입력은 fixture이고, Blender 실행·Storage bytes는 실제다. [Supabase 공식 Docker 구성](https://github.com/supabase/supabase/blob/master/docker/docker-compose.yml)을 참고했다. hosted Storage와 버전이 같다는 주장은 하지 않는다.
 
-실제 이메일/SMTP·TOTP, 운영 DB backup/restore, TLS·요청 제한·운영 부하, Windows 새 CLI/운영 큐 end-to-end, 기존 계정 cutover는 별도 미검증 항목이다. fixture 통과로 이를 완료 처리하지 않는다.
+운영 DB의 선택 스키마 backup/restore와 migration 보존 시험은 완료했다. 실제 이메일 수신·TOTP, 공개 TLS·요청 횟수 제한·운영 부하, Windows 새 CLI/운영 큐 end-to-end, 기존 계정 cutover는 별도 미검증 항목이다. fixture 통과로 이를 완료 처리하지 않는다.
 
 ## 실제 TripoSR 출력과 엔진별 메모리
 

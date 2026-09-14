@@ -1,0 +1,10 @@
+# Append this host block to the existing Caddyfile after choosing its DNS name.
+# Preserve existing hosts and global settings. Validate before reloading.
+clayfarm.example.com {
+    request_body {
+        # 51 MiB request ceiling; the application limits each object to 50 MiB.
+        max_size 53477376
+    }
+    header Cache-Control "no-store"
+    reverse_proxy clayfarm-api:8765
+}

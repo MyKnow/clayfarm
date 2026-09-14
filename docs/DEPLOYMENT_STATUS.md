@@ -1,21 +1,37 @@
 # 배포 상태 — 2026-09-14
 
-사용자는 현재 변경사항을 포함한 비공개 GitHub 저장소 업로드와 MyKnow 홈서버 운영 적용을 요청했다. 아래 표는 실행으로 확인한 상태이며 준비 파일 존재를 운영 성공으로 간주하지 않는다.
+[GitHub Private 저장소](https://github.com/MyKnow/clayfarm)에 코드와 사용방법을 업로드했고 MyKnow 홈서버에서 중앙 API를 가동했다. **API 가동, 공개 HTTPS, 실제 계정·노드의 전체 작업 성공은 별도 검증이다.**
 
 | 항목 | 확인 상태 |
 |---|---|
-| GitHub 대상 | 연결된 사용자 MyKnow, 저장소 이름 clayfarm. 아직 생성·업로드 전 |
-| GitHub 인증 | 연결 앱 조회 성공. CLI 및 저장소 생성 MCP 인증 오류. 사용자 재인증 대기 |
-| 로컬 저장소 | main 최초 커밋에 사용방법·현재 통합 코드·Unity 규칙·서버 실행 패키지 포함. 원격 연결·push 전 |
-| 운영 데이터 | 기존 ClayFarm Supabase 프로젝트 ACTIVE_HEALTHY, private clayfarm bucket |
-| 기존 큐 | farm 1개, 멤버 12개. task 117 done / 16 cancelled, 진행 중 task 없음(사전 조회 시점) |
-| 서버 코드 기준 | 기존 dispatcher body MD5 5f236654413ae934971d9a6e27c45a61, 통합 migration의 사전 조건과 일치 |
-| 새 중앙 통합 | cf_control schema 및 새 gateway 배포 전. 기존 운영 큐/Storage 미변경 |
-| API 호스트 | MyKnow 홈서버, x86_64 / Python 3.12.3. 관리자 SSH 성공, 작업 계정 nologin 및 sudo 비밀번호 요구로 배포 권한 확보 전 |
-| 서비스 URL | 아직 발급·검증하지 않음 |
-| 서버 실행 패키지 | Linux amd64 이미지 빌드, CLI 0.3.0.dev1, pip check, Compose 구성 검사 통과. 실제 Linux API/PostgreSQL smoke에서 ready exit 0, 비로그인 401, UID 10001, DB 장애 시 ready exit 1 |
-| Unity 규칙 | 소스 포함, Mac Unity 실제 FBX 임포트 8개 시나리오 통과. 게임 프로젝트 설치는 별도 |
+| GitHub | MyKnow/clayfarm, Private, main. 첫 코드 커밋 d6192476b1b0455d49f2baffd1490fb9b87ce7ed 업로드 및 원격 SHA 일치 |
+| API 호스트 | MyKnow 홈서버. clayfarm-api-1 healthy, UID 10001, 읽기 전용 루트, 127.0.0.1:8765 |
+| API 코드·이미지 | 위 코드 SHA로 홈서버에서 빌드. 이미지 ID sha256:dbb7efbfb83fdaf5114bc6be22b00ac9f032e0547ae38db99faff90e5818b5da |
+| 운영 데이터 | 기존 ClayFarm Supabase 프로젝트와 private clayfarm bucket 유지 |
+| 중앙 DB 통합 | cf_control 초기화 후 clayfarm_control_queue_bridge 적용. 운영 migration 이력 20260914041144 |
+| 동일 큐 | 기존 farm에 바인딩. health의 queue_backend=public.cf_jobs/cf_tasks, parallel_queue_enabled=false |
+| 기존 데이터 보존 | job 17 / task 133 / attempt 117 / member 12 / Storage 객체 정보 201개 유지. 작업·실행 이력·멤버·Storage 내용 해시 일치 |
+| 기존 워커 활동 | 계속 실행 중인 기존 워커의 last_seen·telemetry와 Auth updated_at은 정상 갱신됨. 해당 갱신을 덮어쓰지 않음 |
+| 서버 DB 권한 | 전용 clayfarm_api 역할. superuser/BYPASSRLS/DB 생성/역할 생성 불가, 작업 테이블 직접 INSERT 및 farm_binding UPDATE 불가 |
+| DB TLS | Supabase 공식 CA로 verify-full 연결. 인증서와 호스트 이름 검증 성공 |
+| HTTPS | clayfarm.myknow.xyz 호스트를 기존 Caddy에 추가. 기존 호스트 보존, SIGUSR1 reload 성공, 재시작 없음. DNS 서버 간 반영 차이로 인증서 발급 재시도 중 |
+| 실제 접속 주소 | https://clayfarm.myknow.xyz — 공개 TLS 검증 완료 전. 현재는 서버 내부 health만 성공 |
+| 이메일 | 사용자 승인으로 기존 Resend 연결. ClayFarm <clayfarm@ssartnership.myknow.xyz>, 8자리 코드 메일 템플릿과 TOTP 설정 확인. 잔존 기본 발송 한도 2회/시간을 30회/시간으로 수정, 재발송 간격 60초 유지. 실제 수신·인증 대기 |
+| 최초 관리자 | 사용자가 지정한 myknow000@gmail.com. 본인 이메일 검증과 TOTP를 마친 뒤 관리자 경로 검증 필요. 자동 관리자 발급 없음 |
+| Hosted Storage | API 컨테이너에서 기존 private 객체 1,836 bytes 읽기 성공. 서버 키 연결 증거이며 사용자·노드 권한 E2E는 별도 |
+| 비로그인 접근 | 사용자 정보와 관리자 요청 API 401. 공개 config에는 publishable key만 포함 |
+| Unity | FBX Medium 고정 및 StaticMeshes 조건부 규칙 포함. Mac Unity 실제 임포트 8개 시나리오 통과 |
 
-운영 적용 전 기존 데이터·DB 함수·권한·서비스 설정의 백업과 복원 경로를 확보한다. 적용 뒤에는 서버 상태, 실제 Auth와 Storage, 동일 작업 큐, 미승인/철회된 요청의 차단을 각각 검증한다. 실제 모델 ready 판정은 [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md)의 모델별 증거 경계를 유지한다.
+CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 DB/RLS 오류는 없었고, 기존 비밀번호 유출 검사 비활성 경고가 남아 있다([공식 설명](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)).
 
-로컬 서버 이미지 ID: `sha256:ee447d7ea2a03727d446fa389d5cf8ba6c72d242321e6d2ff16189502eeef113`. 이는 배포 준비 이미지이며 운영 배포 또는 레지스트리 업로드를 뜻하지 않는다. API smoke는 실제 Linux API/PostgreSQL을 사용했지만 Auth/Storage 설정은 합성이므로 hosted 로그인/Storage 성공 증거로 사용하지 않는다.
+## 백업과 복원 확인
+
+운영 public·clayfarm_private·auth·storage·supabase_migrations 스키마/데이터, 역할, HTTPS 설정과 Auth 설정을 백업했다. DB dump SHA256: 5610920e30d10b1628a70927ca4780b910e3b63102e1fef36edf8aec24e11e6d.
+
+별도 PostgreSQL에 복원한 뒤 같은 통합 migration을 실행하여 기존 8개 테이블의 행과 내용 해시가 변하지 않음을 확인했다. 복원 시험에서는 소유자를 정규화했고, Supabase 관리 플랫폼과 Storage 파일 본문까지 복원한 재해 복구 시험은 아니다. 운영 Storage 파일은 변경하지 않았다.
+
+서버 백업: /srv/backups/clayfarm/preflight-20260914/ (root 전용). 서버 비밀 설정: /etc/myknow/secrets/clayfarm.env (root, 0600). 실행 설정은 /opt/clayfarm/config-candidate-20260914/에 있으며 가동 시 main·edge·TLS Compose 세 파일을 함께 사용했다. 실행 이미지와 설정을 보존하며 down -v나 큐 초기화를 사용하지 않는다.
+
+## 남은 검증
+
+공개 DNS·TLS, 실제 OTP·TOTP, 관리자 승인·새 노드 등록·Windows CUDA 작업·동일 큐 결과와 Storage 권한·철회·재시작을 하나의 실제 흐름으로 검증해야 한다. 기존 모델별 ready 경계는 [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md)를 따른다. 설치·모의 실행·서버 가동만으로 모델 ready나 전체 통합 완료를 선언하지 않는다.

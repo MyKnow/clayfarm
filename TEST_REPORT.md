@@ -2,6 +2,18 @@
 
 첨부 패키지 작성 당시 결과는 [TEST_REPORT_UPSTREAM](docs/TEST_REPORT_UPSTREAM.md)에 보존했다.
 
+## 운영 적용 검증 — 2026-09-14
+
+- GitHub `MyKnow/clayfarm` Private 확인, main의 첫 코드 SHA `d6192476b1b0455d49f2baffd1490fb9b87ce7ed` push 및 원격 일치. 자동 CI는 미구성이다.
+- 운영 DB를 별도 PostgreSQL 17에 복원하고 동일 중앙 bridge migration을 적용했다. 기존 8개 테이블 행 수·내용 해시 유지. Storage 파일 본문까지 복원한 재해 복구 시험은 아니다.
+- 운영 중앙 migration `20260914041144` 적용. 기존 job/task/attempt/member/Storage 내용은 보존했고 기존 워커의 heartbeat·Auth 갱신은 계속 진행했다.
+- 홈서버에서 해당 코드 SHA로 Linux amd64 이미지 빌드, CLI version·pip check 성공. `clayfarm-api-1` healthy, 같은 `public.cf_jobs/cf_tasks` 사용 및 `parallel_queue_enabled=false`.
+- 전용 DB 역할과 Supabase CA의 verify-full TLS 연결, 작업 테이블 직접 INSERT 및 farm 바인딩 직접 UPDATE 거부 확인. 비로그인 사용자·관리자 API 401, 공개 config에는 publishable key만 포함한다.
+- API 컨테이너에서 기존 private Storage 객체 1,836 bytes 읽기 성공. 사용자·노드별 Storage 권한 검증을 대신하지 않는다.
+- 기존 Caddy 설정을 보존하고 새 호스트만 추가, 실제 사용 이미지로 설정 검증 후 reload. 기존 HTTPS 응답 200과 Caddy 재시작 0회 유지. ClayFarm 인증서는 DNS 제공 서버 간 불일치로 발급 대기다.
+- Resend SMTP와 8자리 OTP 템플릿 적용. 가입 429의 잔존 기본 발송 한도(2회/시간)를 30회/시간으로 수정하고 재발송 간격 60초 유지. 실제 본인 이메일 검증·TOTP·새 노드·Windows CUDA·전체 큐/Storage 흐름은 남아 있다.
+- 배포 파일 추가 후 packaging 검사 6개 통과. 이전 단위·중앙·실장비 결과와 운영 증거를 합산하지 않는다. 자세한 현재 상태는 [DEPLOYMENT_STATUS](docs/DEPLOYMENT_STATUS.md)에 기록한다.
+
 ## 추가 검증 — Private 업로드·홈서버 배포 준비, 2026-09-14
 
 - 기존 core·제어 계층·실제 Blender·journal 회귀: **173 passed, 12 subtests passed**.
@@ -10,7 +22,7 @@
 - Linux amd64 서버 이미지 빌드, CLI version, `pip check`, Compose 구성 검사 통과. Python 3.12 서버 wheel 33개 SHA256 고정.
 - 읽기 전용 루트·UID 10001·전용 볼륨으로 실제 Linux API와 PostgreSQL 연결 시험. 동일 중앙 큐 health, 준비 상태 exit 0, 비로그인 401, DB 종료 후 준비 상태 exit 1 및 비밀 미출력 확인. Auth/Storage 주소는 fixture이므로 hosted E2E는 아니다.
 - Gitleaks v8.18.4로 업로드 대상 소스만 별도 복사해 검사: **no leaks found**. 가상환경·모델·작업 저널·로그·서버 환경 파일은 업로드 대상에서 제외했다.
-- 로컬 기록: ignored `work/publish-preflight-20260914/`. 운영 Supabase 코드/작업 상태는 읽기만 했고 DB·Storage·홈서버 서비스는 변경하지 않았다. GitHub/홈서버 인증 복구가 남아 있다.
+- 로컬 기록: ignored `work/publish-preflight-20260914/`. 아래 준비 시험 당시에는 운영 상태를 읽기만 했다. 이후 운영 변경·GitHub 업로드 결과는 위 운영 적용 검증에 구분해 기록했다.
 
 ## 추가 검증 — Unity 임포트 규칙, 2026-09-14
 
@@ -61,4 +73,4 @@ SD-Turbo 고정 model commit: `b261bac6fd2cf515557d5d0707481eafa0485ec2`. 12개 
 
 Mac 원본 Git HEAD는 작업 중 다른 작업에 의해 변경됐다. 최초 import `33e3b8fb366a5d8f9cea0b93d387488e44fe5a0e`, 마지막 읽기 확인 `5a39fd28e38ceed2343f5a886ec2d0f457a89c94`. 원본 ClayFarm 14개 core 파일은 import 이후 변경되지 않았고 해당 경로 Git status는 비어 있었다. 이 작업은 원본 저장소에 쓰지 않았다.
 
-이 저장소는 신규 `main` 브랜치이며 아직 commit/remote/push가 없다. 테스트 성공, 운영 배포, GPU 모델 실행 검증을 각각 별도로 기록한다.
+2026-09-12 통합 시험 당시에는 신규 `main` 브랜치에 commit/remote/push가 없었다. 이후 업로드 상태는 위 운영 적용 검증을 따른다. 테스트 성공, 운영 배포, GPU 모델 실행 검증을 각각 별도로 기록한다.

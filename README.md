@@ -1,6 +1,6 @@
 # ClayFarm Work — 0.3.0.dev1 integration
 
-새 CLI의 승인 계정·Ed25519 노드 인증을 기존 ClayFarm의 **동일한 PostgreSQL 3D DAG와 private Storage**로 연결한 개발 저장소다. 운영 배포 및 전체 모델 검증은 완료되지 않았다.
+새 CLI의 승인 계정·Ed25519 노드 인증을 기존 ClayFarm의 **동일한 PostgreSQL 3D DAG와 private Storage**로 연결한 개발 저장소다. MyKnow 홈서버에 중앙 API와 운영 DB 통합을 적용했다. 공개 HTTPS와 실제 가입·승인·노드 작업 전체 검증은 진행 중이며, 전체 모델이 ready인 상태는 아니다.
 
 - 중앙 모드는 `public.cf_jobs`, `cf_tasks`, `cf_attempts`, `cf_workers`를 사용한다. 작업을 새 큐에 복제하지 않는다.
 - 기존 `cf_rpc`와 새 gateway는 동일 dispatcher를 호출한다. 기존 등록과 저널을 보존한다.
@@ -60,17 +60,19 @@ py -3.12 -m venv .venv
 
 ## 중앙 CLI
 
-운영자가 제공한 HTTPS 서버 주소를 사용한다. 아래 `https://your-clayfarm-gateway.example`은 설명용 주소다. 실제 배포 주소와 적용 상태는 [DEPLOYMENT_STATUS](docs/DEPLOYMENT_STATUS.md)에 기록한다. 노드에 service key, DB 비밀번호, 다른 사람의 세션을 전달하지 않는다.
+서비스 주소는 `https://clayfarm.myknow.xyz`다. 현재 DNS 제공 서버 간 반영 차이로 인증서 발급이 진행 중이므로, 공개 HTTPS 확인 전에는 아래 전체 접속 절차가 성공하지 않는다. 실제 적용 상태는 [DEPLOYMENT_STATUS](docs/DEPLOYMENT_STATUS.md)에 기록한다. 노드에 service key, DB 비밀번호, 다른 사람의 세션을 전달하지 않는다.
 
 ### 가입·참여 신청
 
 ```sh
-clayfarm setup --server https://your-clayfarm-gateway.example --signup --role caller
+clayfarm setup --server https://clayfarm.myknow.xyz --signup --role caller
 clayfarm auth whoami
 clayfarm access status
 ```
 
 이메일과 이메일 인증 코드를 대화형으로 입력한다. `setup --role caller`는 가입/로그인 후 참여 신청까지 수행하며, 승인되기 전에는 작업을 제출할 수 없다. 기존 계정은 `--signup`을 생략한다. 코드 입력을 나중에 하려면 `clayfarm auth login --email YOUR_EMAIL --send-only`와 `clayfarm auth verify`를 사용한다. 인증 코드를 명령 인수나 파일에 저장하지 않는다.
+
+메일 요청에서 429가 나오면 즉시 반복 요청하지 않는다. 운영 메일 제한은 프로젝트 전체 시간당 30회, 같은 주소의 재발송 간격은 60초다. 이미 받은 유효한 코드가 있으면 `clayfarm auth verify --email YOUR_EMAIL`로 새 메일 없이 검증한다. 별도 상태 폴더를 썼다면 모든 인증 명령에 같은 `--home`을 지정한다.
 
 ### 관리자 승인
 

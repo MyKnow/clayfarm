@@ -1,0 +1,11 @@
+# Use with compose.yaml when the existing HTTPS proxy runs in Docker.
+services:
+  api:
+    networks:
+      default: {}
+      https_edge:
+        aliases: [clayfarm-api]
+networks:
+  https_edge:
+    external: true
+    name: ${CLAYFARM_HTTPS_NETWORK:?Set the existing HTTPS proxy network}
