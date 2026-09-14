@@ -6,7 +6,7 @@
 |---|---|---|
 | 저장소 | 첨부 SHA256SUMS 79개 확인, Mac 기존 소스 우선 반영, Windows/Mac 원본 15개가 동일 origin/dev revision과 일치. 사용방법·Unity 규칙·서버 실행 패키지를 포함한 로컬 main 최초 커밋 | GitHub Private 생성·push 완료. [배포 상태](DEPLOYMENT_STATUS.md) |
 | 중앙 큐 | 새 승인 계정과 서명 노드가 기존 public.cf_jobs/tasks/attempts/workers와 동일 dispatcher 사용. 양방향 old/new claim, 동시 claim, lease/fencing, revocation 시험 | 운영 migration 적용 및 기존 데이터 보존 확인. 실제 계정/노드 E2E는 별도 |
-| 승인·인증 | OTP/Supabase adapter, AAL2 관리자 승인, 사용자·노드 철회, body/query/nonce Ed25519 검증, SQL 현재 승인 재확인 | 실제 이메일·OTP·MFA 계정으로 미검증 |
+| 승인·인증 | OTP/Supabase adapter, AAL2 관리자 승인, 사용자·노드 철회, body/query/nonce Ed25519 검증, SQL 현재 승인 재확인. 실제 관리자 이메일·OTP 검증과 최초 관리자 지정 완료 | Mac login 키체인 잠금으로 세션 저장 실패. 저장소 사전 점검 추가. 본인 잠금 해제·새 로그인·MFA 및 전체 승인 흐름은 미완료 |
 | Storage | 실제 Storage API v1.60.4의 private bucket에서 bytes/hash/멱등 업로드/다운로드 확인. 입력·현재 attempt 출력으로 권한 제한 | hosted private 객체 서버 읽기 성공. 사용자/노드 scope E2E 및 새 proxy byte-range/TUS 재개는 미완료 |
 | 3D 실행 | 기존 실행기를 새 노드 인증에 연결. Windows TripoSR 고정 소스/가중치 CUDA 추론·CPU mesh extraction 온라인/새 오프라인 실행 성공 | SF3D gated 접근 차단. Windows 새 CLI/운영 큐 end-to-end 미검증 |
 | 축 계약 | 실제 생성 의자가 누워도 기존 hard_pass가 통과하는 결함 재현. 공식 viewer 변환을 적용한 exact executor로 Windows 재구성·process·6뷰·legacy 호환·CPU revision 통과 | 의미상 앞뒤와 색감은 caller 시각 검토 필요. hard_pass는 시각 승인 아님 |

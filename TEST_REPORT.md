@@ -2,6 +2,14 @@
 
 첨부 패키지 작성 당시 결과는 [TEST_REPORT_UPSTREAM](docs/TEST_REPORT_UPSTREAM.md)에 보존했다.
 
+## 인증 저장소 복구 — 2026-09-14
+
+- 실제 사용자 OTP 검증 성공과 이메일 확인 시각을 Supabase에서 확인했다. 해당 검증 계정을 최초 관리자로 지정하고 감사 기록을 남겼다. TOTP·관리자 API 검증은 아직 완료 전이다.
+- Mac의 기본 login 키체인은 unlocked=false / writable=false이며, 실제 keyring 쓰기가 OSStatus -25308로 실패했다. 이메일 코드 오류와 구분한다.
+- 신규 회귀 검사에서 변경 전 10개 실패를 확인했다. 저장소 잠금 시 메일 발송·코드 입력·검증 중단, 기존 세션/노드 키 보존, 임시 항목 정리, backend 세부 오류 미노출, 성공 시 세션 저장을 검증했다. 관련 검사 27 passed.
+- 기존 core·제어 계층·실제 Blender·journal 포함 회귀: **189 passed, 12 subtests passed**. 이전 중앙 PostgreSQL/Storage 및 실장비 모델 검사와 합산하지 않는다. 로그는 ignored `work/publish-preflight-20260914/vault-regression.log`다.
+- 실제 Mac의 `auth check-vault`도 메일 요청 없이 vault_locked를 반환했다. 본인 키체인 잠금 해제 후 실제 저장 성공 확인은 남아 있다.
+
 ## 운영 적용 검증 — 2026-09-14
 
 - GitHub `MyKnow/clayfarm` Private 확인, main의 첫 코드 SHA `d6192476b1b0455d49f2baffd1490fb9b87ce7ed` push 및 원격 일치. 자동 CI는 미구성이다.

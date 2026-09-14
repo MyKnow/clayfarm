@@ -20,7 +20,7 @@ def parser():
     for name in ("signup","login"):
         x=a.add_parser(name);x.add_argument("--email");x.add_argument("--send-only",action="store_true")
     x=a.add_parser("verify");x.add_argument("--email");x.add_argument("--code-stdin",action="store_true")
-    a.add_parser("whoami");a.add_parser("logout")
+    a.add_parser("whoami");a.add_parser("logout");a.add_parser("check-vault")
     x=a.add_parser("mfa-enroll");x=a.add_parser("mfa-verify");x.add_argument("--factor",required=True);x.add_argument("--code-stdin",action="store_true")
     a=s.add_parser("access").add_subparsers(dest="action",required=True)
     x=a.add_parser("request");x.add_argument("--reason",default="Asset production");x.add_argument("--grant",choices=["creator-basic","experimental"],default="creator-basic");x.add_argument("--idempotency-key")
@@ -97,6 +97,7 @@ def confirm(message,args):
     if args.no_input or input(message+" [y/N]: ").strip().lower()!="y":raise CFError("confirmation_required","Operation not executed",428)
 
 def login(client,args,signup=False,send_only=False,email=None):
+    client.vault.check_writable()
     email=email or getattr(args,"email",None) or ask("Email",args)
     client.auth().otp(email,signup)
     atomic_json(client.home/"pending-login.json",{"email":email})
@@ -243,8 +244,12 @@ def dispatch(a):
         return result
     c=Client(home)
     if g=="auth":
+        if act=="check-vault":
+            c.vault.check_writable()
+            return {"status":"credential_store_ready"}
         if act in ("signup","login"):return login(c,a,signup=act=="signup",send_only=a.send_only)
         if act=="verify":
+            c.vault.check_writable()
             email=a.email or read_json(home/"pending-login.json",{}).get("email") or ask("Email",a)
             code=sys.stdin.readline().strip() if a.code_stdin else ask("Email verification code",a,True)
             session=c.auth().verify(email,code);session["expires_at"]=session.get("expires_at",time.time()+session.get("expires_in",3600));c.vault.put("human-session",session)
@@ -261,6 +266,7 @@ def dispatch(a):
             print("Authenticator setup secret (do not share): "+factor["totp"]["secret"],file=sys.stderr)
             return {"factor_id":factor["id"],"next":"clayfarm auth mfa-verify --factor "+factor["id"]}
         if act=="mfa-verify":
+            c.vault.check_writable()
             code=sys.stdin.readline().strip() if a.code_stdin else ask("Authenticator code",a,True)
             session=c.auth().factor_verify(c.session()["access_token"],a.factor,code)
             if "access_token" not in session:raise CFError("mfa_session_missing","MFA did not return a session")

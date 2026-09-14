@@ -16,8 +16,8 @@
 | DB TLS | Supabase 공식 CA로 verify-full 연결. 인증서와 호스트 이름 검증 성공 |
 | HTTPS | clayfarm.myknow.xyz 호스트를 기존 Caddy에 추가. 기존 호스트 보존, SIGUSR1 reload 성공, 재시작 없음. DNS 서버 간 반영 차이로 인증서 발급 재시도 중 |
 | 실제 접속 주소 | https://clayfarm.myknow.xyz — 공개 TLS 검증 완료 전. 현재는 서버 내부 health만 성공 |
-| 이메일 | 사용자 승인으로 기존 Resend 연결. ClayFarm <clayfarm@ssartnership.myknow.xyz>, 8자리 코드 메일 템플릿과 TOTP 설정 확인. 잔존 기본 발송 한도 2회/시간을 30회/시간으로 수정, 재발송 간격 60초 유지. 실제 수신·인증 대기 |
-| 최초 관리자 | 사용자가 지정한 myknow000@gmail.com. 본인 이메일 검증과 TOTP를 마친 뒤 관리자 경로 검증 필요. 자동 관리자 발급 없음 |
+| 이메일 | 기존 Resend의 ClayFarm <clayfarm@ssartnership.myknow.xyz> 사용, 8자리 OTP 검증 성공. 발송 한도 30회/시간·재발송 간격 60초. Mac 키체인 잠금으로 세션 저장 실패, 잠금 해제 후 새 로그인 필요 |
+| 최초 관리자 | 사용자가 지정한 myknow000@gmail.com의 실제 이메일 검증을 확인하고 첫 admin 지정 및 감사 기록 완료. TOTP와 관리자 경로 검증은 남아 있음 |
 | Hosted Storage | API 컨테이너에서 기존 private 객체 1,836 bytes 읽기 성공. 서버 키 연결 증거이며 사용자·노드 권한 E2E는 별도 |
 | 비로그인 접근 | 사용자 정보와 관리자 요청 API 401. 공개 config에는 publishable key만 포함 |
 | Unity | FBX Medium 고정 및 StaticMeshes 조건부 규칙 포함. Mac Unity 실제 임포트 8개 시나리오 통과 |
@@ -34,4 +34,4 @@ CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 
 
 ## 남은 검증
 
-공개 DNS·TLS, 실제 OTP·TOTP, 관리자 승인·새 노드 등록·Windows CUDA 작업·동일 큐 결과와 Storage 권한·철회·재시작을 하나의 실제 흐름으로 검증해야 한다. 기존 모델별 ready 경계는 [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md)를 따른다. 설치·모의 실행·서버 가동만으로 모델 ready나 전체 통합 완료를 선언하지 않는다.
+공개 DNS·TLS, Mac 키체인 잠금 해제 후 새 로그인·TOTP, 관리자 승인·새 노드 등록·Windows CUDA 작업·동일 큐 결과와 Storage 권한·철회·재시작을 하나의 실제 흐름으로 검증해야 한다. 기존 모델별 ready 경계는 [IMPLEMENTATION_STATUS](IMPLEMENTATION_STATUS.md)를 따른다. 설치·모의 실행·서버 가동만으로 모델 ready나 전체 통합 완료를 선언하지 않는다.

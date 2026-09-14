@@ -1,7 +1,9 @@
 """OS credential vault. No plaintext fallback, including on headless machines."""
 from __future__ import annotations
-import json
+import json, uuid
 from .common import CFError, sha
+
+_UNLOCK_HINT = "Unlock your OS credential store in your desktop session, then retry"
 
 class Vault:
     def __init__(self, namespace: str): self.service="clayfarm:"+sha(namespace.encode())[:24]
@@ -19,17 +21,34 @@ class Vault:
             value=self._backend().get_password(self.service,name)
             return json.loads(value) if value else None
         except CFError: raise
-        except Exception as e: raise CFError("vault_locked","Credential store unavailable or locked") from e
+        except Exception as e: raise CFError("vault_locked",_UNLOCK_HINT) from e
     def put(self,name,value):
         try: self._backend().set_password(self.service,name,json.dumps(value))
         except CFError: raise
-        except Exception as e: raise CFError("vault_locked","Cannot write credential store") from e
+        except Exception as e: raise CFError("vault_locked",_UNLOCK_HINT) from e
     def delete(self,name):
         try:
             backend=self._backend()
             if backend.get_password(self.service,name) is not None: backend.delete_password(self.service,name)
         except CFError: raise
-        except Exception as e: raise CFError("vault_locked","Cannot remove credential") from e
+        except Exception as e: raise CFError("vault_locked",_UNLOCK_HINT) from e
+
+    def check_writable(self):
+        """Check storage before consuming an OTP; only touch a disposable non-secret item."""
+        backend = self._backend()
+        name = "store-check-" + uuid.uuid4().hex
+        marker = uuid.uuid4().hex
+        try:
+            backend.set_password(self.service, name, marker)
+            try:
+                if backend.get_password(self.service, name) != marker:
+                    raise CFError("vault_locked", _UNLOCK_HINT)
+            finally:
+                backend.delete_password(self.service, name)
+        except CFError:
+            raise
+        except Exception as e:
+            raise CFError("vault_locked", _UNLOCK_HINT) from e
 
 class MemoryVault:
     """Explicit in-process test fixture; never selected by the CLI."""
@@ -37,3 +56,4 @@ class MemoryVault:
     def get(self,n): return self.data.get(n)
     def put(self,n,v): self.data[n]=v
     def delete(self,n): self.data.pop(n,None)
+    def check_writable(self): pass

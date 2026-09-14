@@ -74,6 +74,16 @@ clayfarm access status
 
 메일 요청에서 429가 나오면 즉시 반복 요청하지 않는다. 운영 메일 제한은 프로젝트 전체 시간당 30회, 같은 주소의 재발송 간격은 60초다. 이미 받은 유효한 코드가 있으면 `clayfarm auth verify --email YOUR_EMAIL`로 새 메일 없이 검증한다. 별도 상태 폴더를 썼다면 모든 인증 명령에 같은 `--home`을 지정한다.
 
+`vault_locked`는 이 장비의 자격증명 저장소를 사용할 수 없다는 뜻이다. CLI는 메일 발송과 이메일·MFA 코드 검증 전에 임시 비밀 없는 항목으로 저장·읽기·삭제를 확인한다. 기존 세션이나 노드 키를 덮어쓰지 않으며 평문 저장소로 전환하지 않는다. Mac의 login 키체인이 잠겨 있다면 본인 터미널에서 다음 순서로 확인한다.
+
+```sh
+security unlock-keychain "$HOME/Library/Keychains/login.keychain-db"
+clayfarm auth check-vault
+clayfarm auth login --email YOUR_EMAIL
+```
+
+첫 명령의 비밀번호는 Mac 터미널에만 입력한다. 별도 `--home`을 사용하는 경우 두 ClayFarm 명령에 모두 지정한다. `check-vault`는 메일을 보내지 않는다. 이전 버전에서 이메일 코드 검증 후 저장에 실패했다면 코드는 이미 소비됐을 수 있으므로 잠금을 해제한 뒤 새 로그인 코드를 받는다. 사전 점검 이후에 저장소가 다시 잠기면 저장이 실패할 수 있다. 기존 키체인을 초기화하거나 지우지 않는다([Apple 오류 설명](https://developer.apple.com/documentation/security/errsecinteractionnotallowed)).
+
 ### 관리자 승인
 
 첫 관리자는 서버 운영자가 실제 이메일 검증이 끝난 Auth 계정을 지정한다. 이후 관리자 계정으로 로그인하고 MFA를 완료한다.
