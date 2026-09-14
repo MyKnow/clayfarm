@@ -6,10 +6,11 @@ from .inventory import bands_for
 # Implemented code paths, not claims of installed models or tested GPU performance.
 ADAPTERS={
  "deterministic-ui":"builtin_ui", "procedural-sfx":"builtin_sfx",
+ "sa3-small-cpu":"stable_audio_3", "sa3-small-music-cpu":"stable_audio_3",
  "sd-turbo-cuda":"diffusers_image", "sd-turbo-mps":"diffusers_image",
  "sdxl-lowmem-cuda":"diffusers_image", "sdxl-cuda":"diffusers_image", "sdxl-mps":"diffusers_image",
 }
-KINDS={"3d_model","texture","vfx","ui","sfx","rigging","animation"}
+KINDS={"3d_model","texture","vfx","ui","sfx","music","rigging","animation"}
 
 def load_registry(path=None):
     data=json.loads(path.read_text()) if path else json.loads(importlib.resources.files("clayfarm_control").joinpath("data/registry.json").read_text())

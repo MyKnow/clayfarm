@@ -11,7 +11,7 @@ def inv(os="windows",gpu=6,apple=None):
     return r
 
 def test_registry_counts():
-    r=load_registry();assert len(r["models"])==17;assert len(r["profiles"])==39;assert len(r["hardware_bands"])==11
+    r=load_registry();assert len(r["models"])==18;assert len(r["profiles"])==42;assert len(r["hardware_bands"])==11
 
 @pytest.mark.parametrize("memory,band",[(4,"C4"),(6,"C6"),(8,"C8"),(12,"C12"),(16,"C16"),(24,"C24"),(32,"C32")])
 def test_cuda_bands(memory,band):assert bands_for(inv(gpu=memory))==[band,"CPU"]

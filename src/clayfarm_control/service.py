@@ -5,6 +5,7 @@ from .common import CFError, uid, now, canonical, sha
 from .db import users, requests, nodes, events, audit, jobs, nonces, revocations, releases, record
 from .device import public_key_valid
 from .registry import get_profile, profile_digest, ADAPTERS, KINDS
+from . import __version__
 
 ALLOWED_GRANTS={"creator-basic","experimental","release-manager"}
 
@@ -106,7 +107,7 @@ class Service:
             if not release_id: raise CFError("pinned_release_required","Select an approved, immutable model release",422)
             release=self.db.read(releases,id=release_id)
             if not release or release["envelope"]["signed"].get("profile_digest")!=profile_digest(self.registry,p): raise CFError("invalid_release","Release does not match this profile",422)
-        else: release_id="bundled-0.3.0.dev1"
+        else: release_id=f"bundled-{__version__}"
         digest=sha(canonical({"profile_id":profile_id,"spec":spec,"release_id":release_id}))
         with self.db.transaction() as c:
             c.execute(select(users).where(users.c.id==user["id"]).with_for_update()).first()

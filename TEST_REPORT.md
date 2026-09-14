@@ -2,6 +2,22 @@
 
 첨부 패키지 작성 당시 결과는 [TEST_REPORT_UPSTREAM](docs/TEST_REPORT_UPSTREAM.md)에 보존했다.
 
+## CLI 버전·업데이트 — 2026-09-14
+
+- `src/clayfarm_control/version.py`를 단일 버전 원천으로 만들고 pyproject metadata, CLI `--version`, API `/health`, bundled release ID가 `0.4.0.dev1`을 일치하게 광고하는지 확인했다.
+- signed `control_release` manifest의 sequence·만료·신뢰키·플랫폼·artifact path·크기·SHA-256·wheel metadata 검증을 확인했다.
+- FastAPI update feed의 `/v1/updates/check`와 `/v1/updates/artifacts/{release_id}`, TestClient를 통한 signed wheel 다운로드, 변조 artifact 거부를 `tests/test_updates.py`에서 확인했다.
+- 회귀 실행: **162 passed, 2 skipped**. 중앙 PostgreSQL 검사는 환경변수 미설정으로 **20 skipped**했다. 현재 작업 환경의 `.venv/bin/python`에는 pip가 없어 실제 `update apply` 설치는 실행하지 않았으며, CLI는 이를 `update_installer_missing`으로 명시한다.
+- 운영 update root에 wheel·manifest·서명키를 발행하지 않았으므로 운영 사용자가 이미 업데이트를 받는 상태라고 주장하지 않는다. 발행 절차는 [CLI_UPDATES](docs/CLI_UPDATES.md)에 기록했다.
+
+## 로컬 Text-to-Sound 계약·어댑터 — 2026-09-14
+
+- BGM `track_id`와 SFX `event_id`/`variation_count`의 분리 검증, Lobby·Preparation 등 허용 트랙, 범위·seed·알 수 없는 필드 거부를 `tests/test_audio_pipeline.py`에서 확인했다.
+- PCM 16/24/32-bit 및 IEEE float32 WAV 디코드, silence trim, peak normalize, clipping/RMS/loop seam 보고서, waveform JSON·spectrogram SVG 산출물을 확인했다.
+- Stable Audio 3 CPU 어댑터는 pinned snapshot·`model_config.json`·`model.safetensors`·실제 `stable_audio_3` 런타임이 없으면 `audio_model_not_cached`/`runtime_not_installed`로 실패한다. SFX 다중 variation은 bundle 계약 전까지 명시적으로 거부한다.
+- 회귀 실행: **155 passed, 2 skipped** (실제 Blender가 필요한 두 검사는 환경 skip, Starlette/anyio 경고 1건). 현재 Mac 제어 venv에는 stable_audio_3, torch, torchaudio, mlx가 설치되어 있지 않아 실제 음원 생성·MPS/MLX·CUDA peak 측정은 수행하지 않았다.
+- `sa3-small-music-{cpu,cuda,mlx}`를 레지스트리에 추가했지만 모델 revision/file hash, signed release, Windows CUDA 및 Mac MLX 실제 실행 증거가 없어 전부 `ready=false`다. PostgreSQL 중앙 브리지는 3D task kind/capability만 허용하므로 오디오 중앙 큐 통합 완료로 표시하지 않는다.
+
 ## 실제 MFA 복구·공개 인증 검증 — 2026-09-14
 
 - 사용자 터미널에서 새 등록 및 현재 인증기 코드로 `mfa_verified` 성공. 실제 공개 HTTPS `/v1/me`의 admin·aal2, 관리자 요청 조회·Mac 노드 승인 성공을 확인했다. 미완료 등록 키는 검증 후 OS 저장소에서 제거됐다.

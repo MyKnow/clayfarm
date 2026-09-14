@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Python = "python",
-    [string]$InstallDir = (Join-Path $env:LOCALAPPDATA "ClayFarmControl\0.3.0.dev1"),
+    [string]$InstallDir = (Join-Path $env:LOCALAPPDATA "ClayFarmControl\0.4.0.dev1"),
     [switch]$Apply
 )
 $ErrorActionPreference = "Stop"

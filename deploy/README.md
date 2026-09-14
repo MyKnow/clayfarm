@@ -31,6 +31,22 @@ docker compose -f deploy/compose.yaml up -d --wait
 6. `/health`의 queue_backend가 `public.cf_jobs/cf_tasks`, parallel_queue_enabled가 false인지 확인한다. 컨테이너 healthcheck는 API 응답뿐 아니라 DB 연결·기존 farm 바인딩·런타임의 중앙 RPC 실행 권한을 검사한다. Storage와 Auth의 실사용 성공은 별도로 검증한다.
 7. 실제 로그인·AAL2 승인·노드 인증·기존 큐 작업·Storage 다운로드·권한 철회를 검증한 뒤 운영 적용 완료를 기록한다.
 
+### CLI update feed
+
+서명된 control wheel을 배포할 때는 컨테이너의 state 볼륨 아래에 다음 구조를 사용한다.
+
+```text
+/var/lib/clayfarm/updates/
+  manifests/control-<version>.json
+  artifacts/clayfarm_control-<version>-py3-none-any.whl
+```
+
+manifest의 공개키는 서버와 사용자 CLI의 `trust.json`에 동일하게 고정해야 한다. API는
+서명이 유효하고 artifact hash가 일치하는 manifest만 `/v1/updates/check`와
+`/v1/updates/artifacts/{release_id}`로 제공한다. 운영 feed에 올릴 wheel·manifest·서명키가
+없는 상태에서는 `/v1/updates/check`가 업데이트 없음으로 응답한다. 릴리스 생성과 CLI 사용은
+[`docs/CLI_UPDATES.md`](../docs/CLI_UPDATES.md)를 따른다.
+
 ### 기존 Docker HTTPS 프록시에 연결
 
 `compose.edge.yaml`은 기존 프록시 네트워크에 API를 `clayfarm-api` 이름으로 연결한다. DB 전용 네트워크가 아니라 프록시의 애플리케이션 네트워크를 선택한다. 기본 Compose의 loopback 포트와 실행 제한은 그대로 적용된다.

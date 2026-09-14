@@ -52,7 +52,7 @@ def parser():
     x=a.add_parser("list");x.add_argument("--remote",action="store_true")
     x=a.add_parser("describe");x.add_argument("profile_id")
     a=s.add_parser("models").add_subparsers(dest="action",required=True)
-    x=a.add_parser("plan");x.add_argument("--inventory",type=Path);x.add_argument("--kinds",default="3d_model,texture,vfx,ui,sfx,rigging,animation");x.add_argument("--experimental",action="store_true")
+    x=a.add_parser("plan");x.add_argument("--inventory",type=Path);x.add_argument("--kinds",default="3d_model,texture,vfx,ui,sfx,music,rigging,animation");x.add_argument("--experimental",action="store_true")
     a.add_parser("list")
     x=a.add_parser("sync");x.add_argument("--profile");x.add_argument("--recipe",type=Path);x.add_argument("--accept-license",action="store_true");x.add_argument("--allow-download",action="store_true")
     x=a.add_parser("verify");x.add_argument("profile_id");x.add_argument("--spec",type=Path)
@@ -84,6 +84,11 @@ def parser():
     x=a.add_parser("serve");x.add_argument("--host",default="127.0.0.1");x.add_argument("--port",type=int,default=8765);x.add_argument('--development-queue',action='store_true')
     x=a.add_parser('bind-farm');x.add_argument('--farm-id',required=True)
     x=a.add_parser("notify-deliver");x.add_argument("--dry-run",action="store_true")
+    u=s.add_parser("update",help="Check, download, and explicitly install signed CLI releases")
+    us=u.add_subparsers(dest="action")
+    for name in ("check","download"):
+        x=us.add_parser(name);x.add_argument("--channel",choices=["stable","beta","nightly"],default="stable");x.add_argument("--server")
+    x=us.add_parser("apply");x.add_argument("--bundle",type=Path);x.add_argument("--manifest",type=Path)
     x=s.add_parser("demo");x.add_argument("--out",type=Path,default=Path("clayfarm-v03-demo"))
     s.add_parser("doctor")
     x=s.add_parser("legacy");x.add_argument("args",nargs=argparse.REMAINDER)
@@ -136,6 +141,24 @@ def dispatch(a):
         return demo(a.out)
     if g=="doctor":
         return {"python":sys.version,"inventory":probe(),"config_present":(home/"control.json").exists(),"legacy_home_untouched":True,"source_root":str(Path(__file__).resolve().parents[1])}
+    if g=="update":
+        from .updates import apply_update, client_check, stage_update
+        action=getattr(a,"action",None) or "check"
+        if action in ("check","download"):
+            server=getattr(a,"server",None)
+            if not server and not (home/"control.json").exists():
+                raise CFError("server_required","Configure a server or pass --server for update checks")
+            client=Client(home,server=server)
+            result=client_check(client,home,channel=a.channel)
+            if action=="check" or not result.get("update_available"): return result
+            return stage_update(client,home,result["manifest"])
+        state=read_json(home/"update-state.json",{})
+        envelope=read_json(a.manifest,{}) if getattr(a,"manifest",None) else state.get("manifest")
+        if not envelope: raise CFError("update_manifest_required","Download an update first or pass --manifest PATH")
+        bundle=getattr(a,"bundle",None) or state.get("bundle")
+        if not bundle: raise CFError("update_bundle_required","Download an update first or pass --bundle PATH")
+        confirm("Install the signed ClayFarm CLI update into this Python environment?",a)
+        return apply_update(home,envelope,Path(bundle))
     if g=="node" and act=="probe":return probe(python=a.python,deep=a.deep)
     if g=="catalog" and not getattr(a,"remote",False):
         if act=="describe":return get_profile(registry,a.profile_id)
@@ -231,7 +254,7 @@ def dispatch(a):
                 farm=os.environ.get('CLAYFARM_FARM_ID')
                 if not farm: raise CFError('central_configuration_required','Set CLAYFARM_FARM_ID and the existing central database, or explicitly use --development-queue for isolated demos')
                 bridge=CentralBridge(db,farm,SupabaseStorage(url,os.environ.get('SUPABASE_SERVICE_KEY','')))
-            app=create_app(db,registry,SupabaseVerifier(auth),artifact_root=home/"artifacts",auth_config={"supabase_url":url,"publishable_key":key},release_trust=read_json(home/"trust.json",{}),bridge=bridge)
+            app=create_app(db,registry,SupabaseVerifier(auth),artifact_root=home/"artifacts",auth_config={"supabase_url":url,"publishable_key":key},release_trust=read_json(home/"trust.json",{}),bridge=bridge,update_root=home/"updates")
             uvicorn.run(app,host=a.host,port=a.port,access_log=False);return {"stopped":True}
     if g=="setup":
         server=secure_url(a.server,loopback=True)

@@ -3,11 +3,14 @@ from __future__ import annotations
 import html, math, random, re, struct, wave
 from pathlib import Path
 from ..common import CFError
+from ..audio import AUDIO_PROFILES, validate_audio_spec
 
 IMAGE_PROFILES={"sd-turbo-cuda","sd-turbo-mps","sdxl-lowmem-cuda","sdxl-cuda","sdxl-mps"}
 
 def validate_spec(profile,spec):
     if not isinstance(spec,dict): raise CFError("invalid_spec","An object is required")
+    if profile in AUDIO_PROFILES:
+        return validate_audio_spec(profile,spec)
     if profile=="deterministic-ui":
         if set(spec)-{"text","width","height","fill","foreground","radius"}: raise CFError("invalid_spec","Unknown UI field")
         if not isinstance(spec.get("text","ClayFarm"),str) or len(spec.get("text",""))>120: raise CFError("invalid_spec","UI text max 120 characters")

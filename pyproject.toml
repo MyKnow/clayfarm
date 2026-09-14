@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clayfarm-control"
-version = "0.3.0.dev1"
+dynamic = ["version"]
 description = "CLI-first ClayFarm control plane and hardware-adaptive model runtime"
 requires-python = ">=3.11"
 dependencies = ["fastapi==0.128.2", "uvicorn==0.48.0", "httpx==0.28.1", "pydantic==2.13.4", "SQLAlchemy==2.0.50", "cryptography==46.0.4", "keyring==25.7.0", "psutil==7.2.2"]
@@ -21,6 +21,9 @@ assetnode = "clayfarm.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "clayfarm_control.__version__"}
 
 [tool.setuptools.package-data]
 clayfarm_control = ["data/*.json"]

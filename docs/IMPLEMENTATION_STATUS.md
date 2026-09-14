@@ -1,4 +1,4 @@
-# 구현 상태 — 2026-09-14 / Work 통합
+# 구현 상태 — 2026-09-14 / 0.4.0.dev1 Work 통합
 
 이 문서는 현재 저장소 상태다. 첨부 패키지 작성 당시 상태는 [IMPLEMENTATION_STATUS_UPSTREAM](IMPLEMENTATION_STATUS_UPSTREAM.md)에 보존했다. **운영 통합과 전체 모델 검증 완료를 선언하지 않는다.**
 
@@ -25,6 +25,34 @@
 | 복구 | task/attempt/outbox 보존, 현재 lease만 publish. Mac OOM 후 GPU 재사용. Windows 설치 빌드 복구 및 실제 CUDA 제한 OOM 후 메모리 회수·정상 모델 재실행 통과 | 운영 장애·장시간 부하·다중 입력의 자원 최대값 미검증 |
 | 운영 전환 | 최신 dispatcher hash 불일치 시 변경 전 중단하는 migration, 전용 gateway 권한, 문서화. 운영 migration·홈서버 API·공개 TLS·DB 복원 시험 완료 | 실제 MFA·Mac 노드 승인 완료. 동일 큐 실제 작업 완료. 기존 legacy 계정 cutover·시각 품질·장애 검증 필요 |
 | 홈서버 실행 패키지 (2026-09-14) | Linux amd64 서버 이미지와 wheel hash lock, loopback Compose, DB/farm/RPC readiness 검사. 홈서버 healthy·공개 HTTPS·실제 DB TLS/권한·hosted Storage 서버 읽기 확인 | 사용자/노드 전체 E2E는 별도 |
+
+## CLI 버전·업데이트 (2026-09-14)
+
+`src/clayfarm_control/version.py`를 버전의 단일 원천으로 두고 API health, CLI
+`--version`, 작업의 bundled release ID와 패키지 metadata가 같은 값을 읽도록 했다.
+기능 개선 릴리스는 signed wheel manifest(`control_release`)로 고정하며, 서버는
+`/v1/updates/check`와 검증된 artifact 경로를 제공한다. CLI는 `update check`,
+`update download`, 명시적인 `update apply --yes`를 제공하고 서명·플랫폼·크기·SHA-256·
+wheel metadata를 모두 확인한다. 현재 저장소에는 update feed 코드와 생성 도구만 있으며,
+운영 feed에 올릴 wheel과 서명키는 아직 발행하지 않았다. 따라서 이 변경으로 운영
+업데이트가 이미 활성화됐다고 표시하지 않는다. 상세 절차는 [CLI_UPDATES](CLI_UPDATES.md)를 따른다.
+
+## 로컬 Text-to-Sound 확장 (2026-09-14)
+
+`sa3-small-music-*` BGM 프로필 3개와 기존 Stable Audio SFX 프로필을
+등록했다. BGM은 `track_id`(`lobby`, `preparation`, `combat`, `result`)를
+반드시 지정하고 SFX는 `event_id`·`variation_count`를 사용한다. 두 계약은
+서로 다른 필드 집합으로 검증되며 로컬 제어 큐의 입력 경계를 공유한다.
+기존 PostgreSQL 중앙 브리지는 여전히 3D task kind/capability만 허용하므로
+오디오 중앙 큐 통합 완료로 표시하지 않는다.
+
+현재 구현된 것은 표준 WAV 디코더, silence trim/peak normalize, clipping·RMS·
+loop seam 보고서, waveform/spectrogram 미리보기, 그리고 Stable Audio 3
+Python 어댑터의 실패 폐쇄 경로다. CPU/CUDA/MLX 모델 가중치·의존성 lock·
+서명 release와 실제 장비 실행 증거가 없으므로 세 BGM 프로필과 SFX 모델은
+모두 candidate이며 `ready=false`다. Stable Audio 어댑터가 실제 생성한
+출력도 사람 청취 승인 전에는 Unity에 연결하지 않는다. 상세 계약과 명령은
+[AUDIO_PIPELINE](AUDIO_PIPELINE.md)에 기록했다.
 
 ## 하나의 큐라는 의미
 

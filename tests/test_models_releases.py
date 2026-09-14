@@ -15,6 +15,10 @@ def manifest():
 def test_signed_manifest():
     k=new_key();m=manifest();assert verify_manifest(sign_manifest(m,k["private"],"release"),{"release":k["public"]})==m
 
+@pytest.mark.parametrize("bad", [{"signed":{},"signatures":"bad"},{"signed":{"id":1},"signatures":[]}])
+def test_malformed_release_envelope_is_structured_error(bad):
+    with pytest.raises(CFError): verify_manifest(bad,{})
+
 @pytest.mark.parametrize("mode",["tamper","expired","untrusted","rollback","floating","pickle","path"])
 def test_bad_release_rejected(mode):
     k=new_key();m=manifest();high=0
@@ -63,7 +67,7 @@ def cli_env():
 
 def test_cli_json_output(tmp_path):
     r=subprocess.run([sys.executable,"-m","clayfarm_control","--home",str(tmp_path),"catalog","list","--json"],capture_output=True,text=True,env=cli_env())
-    assert r.returncode==0;assert len(json.loads(r.stdout)["profiles"])==39
+    assert r.returncode==0;assert len(json.loads(r.stdout)["profiles"])==42
 
 def test_cli_noninteractive_mutation_does_not_wait(tmp_path):
     r=subprocess.run([sys.executable,"-m","clayfarm_control","--home",str(tmp_path),"models","sync","--profile","procedural-sfx","--no-input"],capture_output=True,text=True,timeout=10,env=cli_env())

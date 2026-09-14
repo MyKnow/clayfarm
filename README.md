@@ -1,4 +1,4 @@
-# ClayFarm Work — 0.3.0.dev1 integration
+# ClayFarm Work — 0.4.0.dev1 integration
 
 새 CLI의 승인 계정·Ed25519 노드 인증을 기존 ClayFarm의 **동일한 PostgreSQL 3D DAG와 private Storage**로 연결한 개발 저장소다. MyKnow 홈서버에 중앙 API와 운영 DB 통합을 적용했고 공개 HTTPS·실제 이메일 로그인·Mac 자격증명 저장을 확인했다. 실제 MFA·Mac 노드 승인과 새 CLI 제출 → 기존 Windows TripoSR → 새 Mac Blender → 결과 다운로드를 같은 운영 큐에서 확인했다. Windows 새 CLI 전환·전체 모델 검증은 남아 있다.
 
@@ -13,6 +13,37 @@
 - 합성 ancestry와 기계 검사 실패 결과는 `diagnostic_candidates`로 표시한다. `ready_candidates`는 실제 출력의 기계 검사 통과이며, 별도의 시각 승인까지 뜻하지 않는다.
 
 현재 상태는 [IMPLEMENTATION_STATUS](docs/IMPLEMENTATION_STATUS.md), 재현·운영 경계는 [CENTRAL_OPERATIONS](docs/CENTRAL_OPERATIONS.md), 큐 계약은 [QUEUE_BRIDGE](docs/QUEUE_BRIDGE.md)를 따른다. 첨부 패키지의 문서는 `docs/*_UPSTREAM.md`에 구분해 보존했다.
+
+## 로컬 Text-to-Sound
+
+텍스트에서 음원을 만드는 작업은 로컬 모델 런타임과 기존 CLI 제어 경계를
+사용한다. BGM(`lobby`, `preparation`, `combat`, `result`)과 SFX(`event_id`)는
+서로 다른 스펙이며, Lobby와 Preparation을 한 곡으로 합치지 않는다. Stable
+Audio 3 Small-Music/SFX의 CPU·CUDA·MLX 후보가 카탈로그에 있지만, 실제 고정
+런타임·가중치·장비 측정이 끝난 프로필만 실행 가능 상태로 승격한다.
+
+현재 PostgreSQL 중앙 브리지는 `reconstruct/process/preview`와 기존 3D
+capability만 허용한다. 오디오를 중앙 작업으로 광고하거나 기존 3D 큐와
+통합 완료로 표시하지 않으며, SQL task capability·중앙 워커·Storage E2E
+마이그레이션이 끝난 뒤에만 중앙 제출 경로를 열 수 있다.
+
+```sh
+# 예제 스펙 확인
+cat examples/bgm-lobby.json
+
+# 운영자가 서명한 pinned release를 설치한 뒤 (라이선스/다운로드 동의 필요)
+clayfarm models sync --profile sa3-small-music-cpu \
+  --recipe ./stable-audio-small-music-release.json \
+  --accept-license --allow-download
+clayfarm models verify sa3-small-music-cpu --spec examples/bgm-lobby.json
+clayfarm models generate sa3-small-music-cpu \
+  --spec examples/bgm-lobby.json --out ./audio/lobby
+```
+
+생성 결과는 `asset.wav`, `waveform.json`, `spectrogram.svg`,
+`audio-report.json`으로 구성된다. WAV를 사람이 청취 승인한 뒤에만 Unity용 OGG와
+기존 `SoundManager`/`AudioMixer`에 연결한다. 전체 BGM/SFX 필드와 실패·검수
+경계는 [AUDIO_PIPELINE](docs/AUDIO_PIPELINE.md)을 따른다.
 
 ## Unity 임포트
 
@@ -147,6 +178,22 @@ clayfarm models list
 `retry-submit`은 해당 CLI의 로컬 저널에 남은 제출을 재시도한다. `node stop`은 현재 계산이 끝난 뒤 새 작업 수신을 중지한다. 재시작할 때는 같은 `--home`으로 `node worker`를 실행해 저널과 미전송 결과를 이어서 사용한다. 모델 목록의 후보·설치 상태는 ready가 아니며 실제 실행 검증과 현재 메모리 조건을 충족해야 한다.
 
 새 상태는 `~/.clayfarm-control`에 저장한다. `clayfarm legacy`, `assetgen`, `assetnode`는 보존된 기존 등록 방식으로 실행하므로 새 인증 세션을 자동 사용하지 않는다.
+
+## CLI 버전과 업데이트
+
+Control CLI는 [`docs/CLI_UPDATES.md`](docs/CLI_UPDATES.md)에 정의한 signed wheel 경로를
+사용한다. 기능 개선마다 `src/clayfarm_control/version.py`의 버전을 올린 뒤 사용자는
+다음 순서로 확인·다운로드·적용한다.
+
+```sh
+clayfarm update check
+clayfarm update download
+clayfarm update apply --yes
+```
+
+업데이트 키가 아직 등록되지 않았다면 운영자가 전달한 공개키를 먼저 `clayfarm trust add`로
+고정한다. CLI는 서명·플랫폼·hash 검증에 실패한 wheel을 설치하지 않으며 백그라운드에서
+임의로 업데이트하지 않는다.
 
 ## 서버 운영
 

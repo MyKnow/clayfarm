@@ -10,7 +10,10 @@ from .common import CFError, now, canonical, sha, atomic_json, file_sha, safe_re
 from .db import users, requests, nodes, events, audit, nonces, revocations, jobs, releases, record
 from .device import verify_headers
 from .service import Service, ALLOWED_GRANTS
-from .registry import profile_digest, ADAPTERS
+from .registry import profile_digest, ADAPTERS, get_profile
+from .audio import AUDIO_PROFILES
+from . import __version__
+from .updates import latest_update, update_artifact
 
 class Body(BaseModel): model_config=ConfigDict(extra="forbid")
 class Join(Body):
@@ -59,11 +62,20 @@ class LimitBody:
             return msg
         await self.app(scope,checked_receive,send)
 
-def create_app(db,registry,verifier,*,artifact_root,auth_config=None,release_trust=None,bridge=None):
-    app=FastAPI(title="ClayFarm Control Plane",version="0.3.0.dev1")
-    app.add_middleware(LimitBody,limit=51*1024*1024 if bridge else 17*1024*1024)
+def create_app(db,registry,verifier,*,artifact_root,auth_config=None,release_trust=None,bridge=None,update_root=None):
+    app=FastAPI(title="ClayFarm Control Plane",version=__version__)
+    # A 120s 44.1kHz stereo PCM master is about 21MiB.  Keep one bounded
+    # request limit for both local and central modes so valid BGM results are
+    # not rejected before the per-artifact check.
+    app.add_middleware(LimitBody,limit=64*1024*1024)
     service=Service(db,registry);root=Path(artifact_root);root.mkdir(parents=True,exist_ok=True)
+    updates=Path(update_root) if update_root is not None else root.parent/"updates"
+    updates.mkdir(parents=True,exist_ok=True)
     app.state.service=service;app.state.db=db
+    def artifact_suffix(profile_id):
+        kinds=set(get_profile(registry,profile_id).get("asset_kinds",()))
+        if "sfx" in kinds or "music" in kinds: return "wav"
+        return "svg" if profile_id=="deterministic-ui" else "png"
     def development_queue():
         if bridge:
             raise CFError('central_queue_required','Use the central 3D task API; the parallel development queue is disabled',409)
@@ -103,9 +115,17 @@ def create_app(db,registry,verifier,*,artifact_root,auth_config=None,release_tru
         if not row or (row["owner"]!=user["id"] and user["role"]!="admin"): raise CFError("not_found","Job not found",404)
         return dict(row)
     @app.get("/health")
-    def health(): return {"status":"ok","version":"0.3.0.dev1","central_queue_configured":bridge is not None,"parallel_queue_enabled":bridge is None,"queue_backend":"public.cf_jobs/cf_tasks" if bridge else "development_fixture_queue"}
+    def health(): return {"status":"ok","version":__version__,"central_queue_configured":bridge is not None,"parallel_queue_enabled":bridge is None,"queue_backend":"public.cf_jobs/cf_tasks" if bridge else "development_fixture_queue"}
     @app.get("/v1/config")
     def config(): return auth_config or {"auth_provider":"test_fixture_only"}
+    @app.get("/v1/updates/check")
+    def updates_check(channel:str="stable",platform_os:str|None=None,platform_arch:str|None=None):
+        envelope=latest_update(updates,release_trust or {},channel=channel,platform_os=platform_os,platform_arch=platform_arch)
+        return {"product":"clayfarm-control","current_version":__version__,"channel":channel,"update_available":envelope is not None,"latest":envelope}
+    @app.get("/v1/updates/artifacts/{release_id}")
+    def update_download(release_id:str):
+        path,manifest=update_artifact(updates,release_trust or {},release_id)
+        return FileResponse(path,media_type="application/octet-stream",filename=path.name,headers={"X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox","X-ClayFarm-Release":manifest["id"]})
     @app.get("/v1/me")
     def me(user=Depends(principal)): return user
     @app.post("/v1/sessions/revoke")
@@ -168,7 +188,7 @@ def create_app(db,registry,verifier,*,artifact_root,auth_config=None,release_tru
     def beat(body:Heartbeat,node=Depends(device)): return service.heartbeat(node,body.inventory,body.capabilities)
     @app.get("/v1/catalog")
     def catalog(user=Depends(principal)):
-        return {"registry_revision":registry["registry_revision"],"profiles":[{**p,"adapter_implemented":p["id"] in ADAPTERS,"profile_digest":profile_digest(registry,p),"access_allowed":"creator-basic" in user["grants"] and (p["lane"]=="candidate" or "experimental" in user["grants"])} for p in registry["profiles"]]}
+        return {"registry_revision":registry["registry_revision"],"profiles":[{**p,"adapter_implemented":p["id"] in ADAPTERS,"central_queue_supported":not bridge or p["id"] not in AUDIO_PROFILES,"profile_digest":profile_digest(registry,p),"access_allowed":"creator-basic" in user["grants"] and (p["lane"]=="candidate" or "experimental" in user["grants"])} for p in registry["profiles"]]}
     @app.get("/v1/notifications")
     def notifications(after:int=0,user=Depends(principal)):
         audience=[user["id"]]+(["admins"] if user["role"]=="admin" else [])
@@ -218,8 +238,8 @@ def create_app(db,registry,verifier,*,artifact_root,auth_config=None,release_tru
         job=db.read(jobs,id=jid)
         if not job or job["node_id"]!=node["id"] or job["attempt_id"]!=attempt or job["state"]!="running" or job["lease_until"]<now(): raise CFError("stale_attempt","Only the current lease may upload",409)
         data=await req.body()
-        if not 1<=len(data)<=16*1024*1024: raise CFError("artifact_size","Artifact must be 1 byte..16MiB",413)
-        suffix="svg" if job["profile_id"]=="deterministic-ui" else "wav" if job["profile_id"]=="procedural-sfx" else "png"
+        if not 1<=len(data)<=48*1024*1024: raise CFError("artifact_size","Artifact must be 1 byte..48MiB",413)
+        suffix=artifact_suffix(job["profile_id"])
         if suffix=="png" and not data.startswith(b"\x89PNG\r\n\x1a\n"): raise CFError("artifact_format","PNG header missing")
         if suffix=="wav" and not(data[:4]==b"RIFF" and data[8:12]==b"WAVE"): raise CFError("artifact_format","WAV header missing")
         path=root/jid/attempt/("asset."+suffix);path.parent.mkdir(parents=True,exist_ok=True)
@@ -232,7 +252,7 @@ def create_app(db,registry,verifier,*,artifact_root,auth_config=None,release_tru
         job=db.read(jobs,id=jid)
         if body.output:
             if not job or job["node_id"]!=node["id"] or job["attempt_id"]!=body.attempt_id: raise CFError("stale_attempt","Invalid owner",409)
-            expected="asset.svg" if job["profile_id"]=="deterministic-ui" else "asset.wav" if job["profile_id"]=="procedural-sfx" else "asset.png"
+            expected="asset."+artifact_suffix(job["profile_id"])
             if set(body.output)!={"name","sha256","size"} or body.output["name"]!=expected: raise CFError("invalid_output","Unexpected artifact manifest")
             p=root/jid/body.attempt_id/expected
             if not p.is_file() or file_sha(p)!=body.output["sha256"] or p.stat().st_size!=body.output["size"]: raise CFError("invalid_output","Artifact manifest does not match stored bytes")

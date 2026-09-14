@@ -48,7 +48,7 @@ def secure_url(url: str, *, loopback: bool=False) -> str:
 
 def safe_id(value: str) -> str:
     import re
-    if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}",value) or ".." in value:
+    if not isinstance(value,str) or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}",value) or ".." in value:
         raise CFError("invalid_id","Invalid identifier")
     return value
 

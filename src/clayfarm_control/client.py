@@ -8,8 +8,10 @@ from .device import sign_headers
 from .auth import SupabaseAuth
 
 class Client:
-    def __init__(self,home,*,transport=None,vault=None):
+    def __init__(self,home,*,transport=None,vault=None,server=None):
         self.home=Path(home);self.config=read_json(self.home/"control.json",{})
+        if server is not None:
+            self.config["server"]=secure_url(server,loopback=True)
         self.url=secure_url(self.config.get("server",""),loopback=True)
         self.http=httpx.Client(transport=transport,timeout=30,follow_redirects=False)
         self.vault=vault or Vault(str(self.home.resolve())+self.url)

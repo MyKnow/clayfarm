@@ -5,6 +5,7 @@ from .common import CFError, atomic_json, read_json, file_sha, canonical, sha, s
 from .registry import get_profile, profile_digest, ADAPTERS
 from .releases import verify_manifest
 from clayfarm.util import ProcessLock
+from . import __version__
 
 class Models:
     def __init__(self,home,registry):
@@ -17,7 +18,7 @@ class Models:
         return result
     def adapter_digest(self,pid):
         base=Path(__file__).parent
-        paths=[base/"runtime.py",base/"models.py",base/"adapters/builtin.py",base/"adapters/diffusers_image.py",base/"process.py",base/"inventory.py",base/"registry.py"]
+        paths=[base/"runtime.py",base/"models.py",base/"adapters/builtin.py",base/"adapters/diffusers_image.py",base/"adapters/stable_audio.py",base/"audio.py",base/"process.py",base/"inventory.py",base/"registry.py"]
         return sha(b"".join(p.read_bytes() for p in paths)+pid.encode())
     def environment_fingerprint(self,python):
         script="import importlib.metadata as m,json,sys; print(json.dumps({'python':sys.version,'packages':sorted((d.metadata['Name'],d.version) for d in m.distributions() if d.metadata.get('Name'))},sort_keys=True))"
@@ -32,7 +33,7 @@ class Models:
             old=read_json(self.root/pid/"current.json",{})
             envfp=self.environment_fingerprint(sys.executable)
             if old and old.get("profile_digest")==profile_digest(self.registry,p) and old.get("adapter_digest")==self.adapter_digest(pid) and old.get("environment_fingerprint")==envfp: return old
-            state={"profile_id":pid,"profile_digest":profile_digest(self.registry,p),"status":"installed_unverified","backend":"cpu","python":sys.executable,"adapter_digest":self.adapter_digest(pid),"model_dir":None,"release_id":"bundled-0.3.0.dev1","environment_fingerprint":envfp}
+            state={"profile_id":pid,"profile_digest":profile_digest(self.registry,p),"status":"installed_unverified","backend":"cpu","python":sys.executable,"adapter_digest":self.adapter_digest(pid),"model_dir":None,"release_id":f"bundled-{__version__}","environment_fingerprint":envfp}
             if old: atomic_json(self.root/pid/"previous.json",old)
             atomic_json(self.root/pid/"current.json",state)
             return state
@@ -84,7 +85,7 @@ class Models:
                 if not file.is_file() or file_sha(file)!=digest: raise CFError("model_hash_mismatch","Installed model changed")
         out=Path(out).resolve();out.mkdir(parents=True,exist_ok=True)
         request=out/"request.json";result=out/"receipt.json";result.unlink(missing_ok=True)
-        atomic_json(request,{"profile":p,"spec":spec,"model_dir":state.get("model_dir") or ".","out":str(out)})
+        atomic_json(request,{"profile":p,"spec":spec,"model_dir":state.get("model_dir") or ".","out":str(out),"runtime_python":state.get("python")})
         allow={"PATH","SYSTEMROOT","WINDIR","TEMP","TMP","TMPDIR","HOME","USERPROFILE","LOCALAPPDATA","APPDATA","LD_LIBRARY_PATH","DYLD_LIBRARY_PATH","CUDA_HOME","CUDA_PATH","LANG","LC_ALL"}
         env={k:v for k,v in os.environ.items() if k in allow}
         env.update({"PYTHONPATH":str(Path(__file__).resolve().parents[1]),"HF_HUB_OFFLINE":"1","TRANSFORMERS_OFFLINE":"1","PYTORCH_ENABLE_MPS_FALLBACK":"0"})
@@ -118,8 +119,10 @@ class Models:
         if evidence.get("status")!="verified": raise CFError("verification_failed","No successful runtime receipt")
         if evidence.get('backend')!=p['backend'] or not evidence.get('peak_host_bytes'):
             raise CFError('verification_failed','Runtime backend and memory evidence are required')
-        if p.get('model_id') and (evidence.get('details',{}).get('neural') is not True or not evidence.get('peak_device_bytes')):
-            raise CFError('verification_failed','Real neural execution and device memory evidence are required')
+        if p.get('model_id') and evidence.get('details',{}).get('neural') is not True:
+            raise CFError('verification_failed','Real neural execution evidence is required')
+        if p.get('model_id') and p['backend']!="cpu" and not evidence.get('peak_device_bytes'):
+            raise CFError('verification_failed','Device memory evidence is required for non-CPU neural execution')
         artifact=Path(evidence["artifact"]).resolve()
         if not artifact.is_relative_to(out) or not artifact.is_file() or file_sha(artifact)!=evidence["artifact_sha256"]: raise CFError("invalid_artifact","Output artifact failed validation")
         return {**evidence,"profile_id":pid,"profile_digest":state["profile_digest"],"adapter_digest":state["adapter_digest"],"release_id":state["release_id"]}
@@ -129,7 +132,13 @@ class Models:
             state=read_json(self.root/pid/"pending.json") or read_json(self.root/pid/"current.json")
             if not state: raise CFError("model_not_installed","Sync this profile first")
             if spec is None:
-                spec={"text":"ClayFarm 검증"} if pid=="deterministic-ui" else {"effect":"beep","seconds":.2} if pid=="procedural-sfx" else {"prompt":"one matte clay cube on a plain neutral background","seed":0}
+                if pid=="deterministic-ui": spec={"text":"ClayFarm 검증"}
+                elif pid=="procedural-sfx": spec={"effect":"beep","seconds":.2}
+                elif pid.startswith("sa3-small-music"):
+                    spec={"track_id":"lobby","prompt":"bright open welcoming instrumental melody for a game lobby","duration_seconds":5,"loop_required":True,"seed":0}
+                elif pid.startswith("sa3-small"):
+                    spec={"event_id":"verification","prompt":"short neutral game sound effect","duration_seconds":.2,"variation_count":1,"seed":0}
+                else: spec={"prompt":"one matte clay cube on a plain neutral background","seed":0}
             out=self.root/pid/"verification"/str(uuid.uuid4())
             evidence=self._run(pid,spec,out,state)
             current=read_json(self.root/pid/"current.json")

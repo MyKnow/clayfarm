@@ -8,6 +8,7 @@ from clayfarm_control.db import jobs
 from clayfarm_control.registry import load_registry,get_profile,profile_digest
 from clayfarm_control.inventory import probe
 from clayfarm_control.demo import USER
+from clayfarm_control import __version__
 from test_security_api import request_access,register
 
 
@@ -16,7 +17,7 @@ def ready_node(admin,user):
     admin.call('PUT',f'/v1/admin/nodes/{nid}/desired',{'profiles':['procedural-sfx'],'expected_revision':0})
     p=get_profile(load_registry(),'procedural-sfx')
     # Synthetic capability used only to isolate queue tests; not a GPU/quality claim.
-    cap={'profile_id':p['id'],'status':'verified','backend':'cpu','profile_digest':profile_digest(load_registry(),p),'peak_host_bytes':1024,'peak_device_bytes':0,'artifact_sha256':'a'*64,'adapter_digest':'b'*64,'tested_at':time.time(),'release_id':'bundled-0.3.0.dev1'}
+    cap={'profile_id':p['id'],'status':'verified','backend':'cpu','profile_digest':profile_digest(load_registry(),p),'peak_host_bytes':1024,'peak_device_bytes':0,'artifact_sha256':'a'*64,'adapter_digest':'b'*64,'tested_at':time.time(),'release_id':f'bundled-{__version__}'}
     user.call('POST','/v1/node/heartbeat',{'inventory':probe(),'capabilities':[cap]},node=True)
     return nid
 

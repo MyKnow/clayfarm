@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON="python3"
-INSTALL_DIR="$HOME/.local/share/clayfarm-control/0.3.0.dev1"
+INSTALL_DIR="$HOME/.local/share/clayfarm-control/0.4.0.dev1"
 APPLY=0
 while (($#)); do
   case "$1" in

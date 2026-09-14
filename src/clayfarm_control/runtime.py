@@ -4,7 +4,7 @@ import argparse, json, os, threading, time
 from pathlib import Path
 from .common import atomic_json, file_sha, now, CFError
 
-def execute(profile,spec,model_dir,out):
+def execute(profile,spec,model_dir,out,runtime_python=None):
     import psutil
     from .registry import ADAPTERS
     adapter=ADAPTERS.get(profile["id"])
@@ -29,6 +29,9 @@ def execute(profile,spec,model_dir,out):
         elif adapter=="diffusers_image":
             from .adapters.diffusers_image import generate
             artifact,details=generate(profile,spec,model_dir,out)
+        elif adapter=="stable_audio_3":
+            from .adapters.stable_audio import generate
+            artifact,details=generate(profile,spec,model_dir,out)
         else: raise CFError("adapter_not_implemented","No executable adapter")
         samples["peak_host_bytes"]=max(samples["peak_host_bytes"],proc.memory_info().rss)
         if details.get("sample_device_bytes") is not None: samples["peak_device_bytes"]=max(samples["peak_device_bytes"] or 0,details["sample_device_bytes"])
@@ -50,7 +53,7 @@ def main():
             import torch
             if not torch.cuda.is_available():raise CFError('backend_unavailable','CUDA is unavailable')
             torch.cuda.set_per_process_memory_fraction(min(1.0,req['device_budget_bytes']/torch.cuda.get_device_properties(0).total_memory))
-        result=execute(req["profile"],req["spec"],Path(req.get("model_dir",".")),Path(req["out"]))
+        result=execute(req["profile"],req["spec"],Path(req.get("model_dir",".")),Path(req["out"]),req.get("runtime_python"))
         atomic_json(Path(args.result),result)
         return 0
     except Exception as e:

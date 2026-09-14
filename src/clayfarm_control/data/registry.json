@@ -1,10 +1,10 @@
 {
   "schema_version": "0.1-draft",
-  "registry_revision": "2026-09-12-draft1",
+  "registry_revision": "2026-09-14-audio1",
   "language": "ko",
   "status": "planning_only_not_deployable",
   "generated_at": "2026-09-12",
-  "notice": "모델 선택/구간/파이프라인 설계 산출물. ClayFarm 코드 수정·설치·GPU/MPS/MLX 실행 검증은 수행하지 않음. 근거없는 성능 수치는 null이며 0이 아님.",
+  "notice": "모델 선택/구간/파이프라인 설계와 오디오 어댑터 계약 산출물. 모델 설치·GPU/MPS/MLX 실행 검증은 수행하지 않음. 근거없는 성능 수치는 null이며 0이 아님.",
   "normative_requirements": [
     "RTX 4050를 포함한 이기종 컴퓨터를 가입·승인·등록 가능한 워커 대상으로 한다.",
     "GPU 브랜드/모델명 whitelist로 사용자를 차단하지 않는다. 실행기 호환성 및 안전 실행 예산으로 각 기능을 판정한다.",
@@ -387,6 +387,21 @@
       "license_note": "Stable Audio Community + Gemma 구성요소 조건; 접근 승인 필요",
       "scope": [
         "sfx"
+      ],
+      "deployment_approved": false
+    },
+    "sa3-small-music": {
+      "name": "Stable Audio 3 Small-Music",
+      "repository": "stabilityai/stable-audio-3-small-music",
+      "model_revision": null,
+      "weights_sha256": null,
+      "source_ids": [
+        "sa3-small-music",
+        "sa3-runtime"
+      ],
+      "license_note": "Stable Audio Community + Gemma 구성요소 조건; 상업 사용 전 약관·접근 승인 필요",
+      "scope": [
+        "music"
       ],
       "deployment_approved": false
     },
@@ -1535,8 +1550,10 @@
       ],
       "lane": "candidate",
       "settings": {
-        "runtime": "tflite",
+        "runtime": "python",
+        "model_name": "small-sfx",
         "duration_seconds": 5,
+        "steps": 8,
         "batch_size": 1
       },
       "upstream_memory_evidence": null,
@@ -1548,6 +1565,123 @@
       "adapter_status": "not_implemented_or_verified_by_this_artifact",
       "node_ready": false,
       "notes": "Windows/macOS CPU 경로를 먼저 검증. RAM 및 텍스트 encoder 비용 포함."
+    },
+    {
+      "id": "sa3-small-music-cpu",
+      "model_id": "sa3-small-music",
+      "engine_kind": "learned_model",
+      "backend": "cpu",
+      "candidate_hardware_bands": [
+        "CPU",
+        "C4",
+        "C6",
+        "C8",
+        "C12",
+        "C16",
+        "C24",
+        "C32",
+        "A16",
+        "A24",
+        "A32"
+      ],
+      "asset_kinds": [
+        "music"
+      ],
+      "os_candidates": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "lane": "candidate",
+      "settings": {
+        "runtime": "python",
+        "model_name": "small-music",
+        "duration_seconds": 30,
+        "steps": 8,
+        "batch_size": 1
+      },
+      "upstream_memory_evidence": null,
+      "measured_peak_device_bytes": null,
+      "measured_peak_host_bytes": null,
+      "measured_p95_seconds": null,
+      "executor_revision": null,
+      "environment_lock_sha256": null,
+      "adapter_status": "implemented_adapter_unverified",
+      "node_ready": false,
+      "notes": "실제 pinned runtime·가중치·CPU 측정 전 후보. Lobby/Preparation/Combat/Result는 track_id로 분리 요청."
+    },
+    {
+      "id": "sa3-small-music-cuda",
+      "model_id": "sa3-small-music",
+      "engine_kind": "learned_model",
+      "backend": "cuda",
+      "candidate_hardware_bands": [
+        "C4",
+        "C6",
+        "C8",
+        "C12",
+        "C16",
+        "C24",
+        "C32"
+      ],
+      "asset_kinds": [
+        "music"
+      ],
+      "os_candidates": [
+        "windows",
+        "linux"
+      ],
+      "lane": "candidate",
+      "settings": {
+        "runtime": "python",
+        "model_name": "small-music",
+        "duration_seconds": 30,
+        "steps": 8,
+        "batch_size": 1
+      },
+      "upstream_memory_evidence": null,
+      "measured_peak_device_bytes": null,
+      "measured_peak_host_bytes": null,
+      "measured_p95_seconds": null,
+      "executor_revision": null,
+      "environment_lock_sha256": null,
+      "adapter_status": "runner_backend_unverified",
+      "node_ready": false,
+      "notes": "Windows CUDA 실장비 실행·peak memory와 model lock 확인 전 후보."
+    },
+    {
+      "id": "sa3-small-music-mlx",
+      "model_id": "sa3-small-music",
+      "engine_kind": "learned_model",
+      "backend": "mlx",
+      "candidate_hardware_bands": [
+        "A16",
+        "A24",
+        "A32"
+      ],
+      "asset_kinds": [
+        "music"
+      ],
+      "os_candidates": [
+        "macos"
+      ],
+      "lane": "experimental",
+      "settings": {
+        "runtime": "mlx",
+        "model_name": "small-music",
+        "duration_seconds": 30,
+        "steps": 8,
+        "batch_size": 1
+      },
+      "upstream_memory_evidence": null,
+      "measured_peak_device_bytes": null,
+      "measured_peak_host_bytes": null,
+      "measured_p95_seconds": null,
+      "executor_revision": null,
+      "environment_lock_sha256": null,
+      "adapter_status": "runner_not_implemented",
+      "node_ready": false,
+      "notes": "공식 MLX 경로의 실제 음악 모델 실행기와 unified-memory 측정 전 차단."
     },
     {
       "id": "sa3-small-cuda",
@@ -1572,6 +1706,8 @@
       ],
       "lane": "candidate",
       "settings": {
+        "runtime": "python",
+        "model_name": "small-sfx",
         "duration_seconds": 5,
         "batch_size": 1
       },
@@ -1607,6 +1743,8 @@
       ],
       "lane": "experimental",
       "settings": {
+        "runtime": "mlx",
+        "model_name": "small-sfx",
         "duration_seconds": 5,
         "batch_size": 1
       },
@@ -1963,6 +2101,11 @@
       "url": "https://huggingface.co/stabilityai/stable-audio-3-small-sfx",
       "note": "SFX 특화. 접근 승인, Stable Audio Community 및 Gemma 구성요소 조건 검토.",
       "checked_at": "2026-09-12"
+    },
+    "sa3-small-music": {
+      "url": "https://huggingface.co/stabilityai/stable-audio-3-small-music",
+      "note": "BGM 후보. Stable Audio Community 및 Gemma 구성요소 조건과 gated 접근을 확인해야 하며 실제 음원 승인과 별개.",
+      "checked_at": "2026-09-14"
     },
     "sa3-medium": {
       "url": "https://huggingface.co/stabilityai/stable-audio-3-medium",

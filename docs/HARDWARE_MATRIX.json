@@ -1,7 +1,7 @@
 {
-  "date": "2026-09-12",
+  "date": "2026-09-14",
   "windows_status": "RTX 4050 Laptop 6141 MiB: TripoSR exact executor pipeline and SD-Turbo offline CUDA generation / bounded OOM / memory recovery / fresh rerun passed. Production ready remains false.",
-  "mlx_runtime": "GPU tensor passed; model adapters unimplemented",
+  "mlx_runtime": "GPU tensor passed; Stable Audio MLX adapter and model evidence remain unverified",
   "profiles": [
     {
       "profile_id": "procedural-static-mesh",
@@ -231,6 +231,30 @@
       "profile_id": "sa3-small-cpu",
       "model_id": "sa3-small-sfx",
       "backend": "cpu",
+      "adapter_implemented": true,
+      "observed_status": "adapter_present_runtime_and_weights_unverified",
+      "production_ready": false
+    },
+    {
+      "profile_id": "sa3-small-music-cpu",
+      "model_id": "sa3-small-music",
+      "backend": "cpu",
+      "adapter_implemented": true,
+      "observed_status": "adapter_present_runtime_and_weights_unverified",
+      "production_ready": false
+    },
+    {
+      "profile_id": "sa3-small-music-cuda",
+      "model_id": "sa3-small-music",
+      "backend": "cuda",
+      "adapter_implemented": false,
+      "observed_status": "adapter_not_implemented",
+      "production_ready": false
+    },
+    {
+      "profile_id": "sa3-small-music-mlx",
+      "model_id": "sa3-small-music",
+      "backend": "mlx",
       "adapter_implemented": false,
       "observed_status": "adapter_not_implemented",
       "production_ready": false
@@ -330,7 +354,7 @@
       "production_ready": false
     }
   },
-  "legacy_3d_note": "These execute through the existing 3D DAG; registry multi-model adapters below are separate unimplemented candidates and remain false.",
+  "legacy_3d_note": "These execute through the existing 3D DAG; the registry audio adapter is a separate local candidate and remains production_ready=false until pinned runtime and hardware evidence.",
   "mac_sd_turbo_attempts": 3,
   "mac_sd_turbo_last_attempt": {
     "status": "failed_device_memory_pressure",
