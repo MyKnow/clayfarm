@@ -1,12 +1,12 @@
 # 배포 상태 — 2026-09-14
 
-[GitHub Private 저장소](https://github.com/MyKnow/clayfarm)에 코드와 사용방법을 업로드했고 MyKnow 홈서버에서 중앙 API를 가동했다. **API 가동, 공개 HTTPS, 실제 계정·노드의 전체 작업 성공은 별도 검증이다.**
+[GitHub Private 저장소](https://github.com/MyKnow/clayfarm)에 코드와 사용방법을 업로드했고 MyKnow 홈서버의 중앙 API를 `v0.4.0.dev2`로 교체했다. **API 가동, 공개 HTTPS, 실제 계정·노드의 전체 작업 성공은 별도 검증이다.**
 
 | 항목 | 확인 상태 |
 |---|---|
-| GitHub | MyKnow/clayfarm, Private, main. 첫 코드 커밋 d6192476b1b0455d49f2baffd1490fb9b87ce7ed 업로드 및 원격 SHA 일치 |
+| GitHub | MyKnow/clayfarm, Private, main. `v0.4.0.dev2` 코드 커밋 `dc120e9`와 태그를 원격에 업로드하고 SHA 일치 확인 |
 | API 호스트 | MyKnow 홈서버. clayfarm-api-1 healthy, UID 10001, 읽기 전용 루트, 127.0.0.1:8765 |
-| API 코드·이미지 | CLI 버전·signed update feed·로컬 Text-to-Sound 확장을 포함한 `1f7cb52`로 갱신. 이미지 ID sha256:903b0e2589a06c0f966f0985db3989017a46e43bb91d87ab1c1bd1c566356a45. `clayfarm --version`과 `/health`의 `0.4.0.dev1` 일치, 2026-09-14 healthy |
+| API 코드·이미지 | `dc120e9` (`v0.4.0.dev2`)를 `/opt/clayfarm/releases/dc120e9`에 배치해 빌드·교체했다. 이미지 ID `sha256:66e4f02c0a4caf70a9224147b95bbb01644df631a434429359671abeb1b66500`. 컨테이너 `clayfarm-api-1`은 2026-09-14 23:35 KST 기준 restart 0·healthy이며, 컨테이너 CLI·공개 `/health`가 모두 `0.4.0.dev2`를 보고한다. |
 | 운영 데이터 | 기존 ClayFarm Supabase 프로젝트와 private clayfarm bucket 유지 |
 | 중앙 DB 통합 | cf_control 초기화 후 clayfarm_control_queue_bridge 적용. 운영 migration 이력 20260914041144 |
 | 동일 큐 | 기존 farm에 바인딩. health의 queue_backend=public.cf_jobs/cf_tasks, parallel_queue_enabled=false |
@@ -23,7 +23,7 @@
 | 실제 로그인 권한 | 공개 HTTPS에서 관리자 계정 /v1/me 200·admin 역할 확인. AAL1의 관리자 요청 조회 403 mfa_required, TOTP 후 AAL2 관리자 경로 200. 미등록 장비 경로 401 unknown_device |
 | Mac 노드 | 실제 신청·AAL2 승인·Ed25519 노드 인증·중앙 heartbeat 성공. Blender만 허용, 실제 5.2.1 자가 점검 통과. AI 모델 ready와 별개 |
 | Unity | FBX Medium 고정 및 StaticMeshes 조건부 규칙 포함. Mac Unity 실제 임포트 8개 시나리오 통과 |
-| CLI 업데이트 | `/v1/updates/check?channel=stable&platform_os=linux&platform_arch=amd64`가 signed manifest가 없는 현재 운영 update root에서 `update_available=false`·`latest=null`을 반환. wheel과 서명키를 발행하기 전까지 운영 자동 수신을 활성화하지 않음 |
+| CLI 업데이트 | 운영 API의 `/v1/updates/check?channel=stable&platform_os=linux&platform_arch=amd64`가 `current_version=0.4.0.dev2`, `update_available=false`, `latest=null`을 반환. signed wheel·manifest를 발행하기 전까지 자동 수신은 비활성 상태 |
 
 CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 DB/RLS 오류는 없었고, 기존 비밀번호 유출 검사 비활성 경고가 남아 있다([공식 설명](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)).
 
@@ -33,7 +33,7 @@ CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 
 
 별도 PostgreSQL에 복원한 뒤 같은 통합 migration을 실행하여 기존 8개 테이블의 행과 내용 해시가 변하지 않음을 확인했다. 복원 시험에서는 소유자를 정규화했고, Supabase 관리 플랫폼과 Storage 파일 본문까지 복원한 재해 복구 시험은 아니다. 기존 운영 Storage 파일은 보존했다. 이후 실제 작업 검증에서 새 입력·결과 객체를 추가했다.
 
-서버 백업: /srv/backups/clayfarm/preflight-20260914/ (root 전용). 서버 비밀 설정: /etc/myknow/secrets/clayfarm.env (root, 0600). 현재 실행 환경은 /opt/clayfarm/config-mfa-20260914/deploy.env이며 해당 코드 release의 main·edge·TLS Compose 세 파일을 함께 사용한다. 이전 d984132 이미지와 /opt/clayfarm/config-vault-20260914/, 최초 d619247 이미지와 /opt/clayfarm/config-candidate-20260914/ 설정도 복구용으로 보존했다. down -v나 큐 초기화를 사용하지 않는다.
+서버 백업: /srv/backups/clayfarm/preflight-20260914/ (root 전용) 및 이번 교체의 컨테이너 메타데이터 `/srv/backups/clayfarm/pre-deploy-20260914-dev2/`. 서버 비밀 설정: /etc/myknow/secrets/clayfarm.env (root, 0600). 현재 실행 환경은 `/opt/clayfarm/config-mfa-20260914/deploy.env`와 `/opt/clayfarm/releases/dc120e9/deploy/`의 main·edge·TLS Compose 세 파일이다. 이전 `1f7cb52`, d984132 이미지와 `/opt/clayfarm/config-vault-20260914/`, 최초 d619247 이미지와 `/opt/clayfarm/config-candidate-20260914/` 설정도 복구용으로 보존했다. down -v나 큐 초기화를 사용하지 않는다.
 
 ## 실제 동일 큐·Storage 검증
 

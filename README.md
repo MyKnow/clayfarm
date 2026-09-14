@@ -2,7 +2,7 @@
 
 새 CLI의 승인 계정·Ed25519 노드 인증을 기존 ClayFarm의 **동일한 PostgreSQL 3D DAG와 private Storage**로 연결한 개발 저장소다. MyKnow 홈서버에 중앙 API와 운영 DB 통합을 적용했고 공개 HTTPS·실제 이메일 로그인·Mac 자격증명 저장을 확인했다. 실제 MFA·Mac 노드 승인과 새 CLI 제출 → 기존 Windows TripoSR → 새 Mac Blender → 결과 다운로드를 같은 운영 큐에서 확인했다. Windows 새 CLI 전환·전체 모델 검증은 남아 있다.
 
-현재 로컬 코드 버전은 `0.4.0.dev2`이며, 운영 API는 서명 wheel/feed를 발행하기 전까지 기존 `0.4.0.dev1` 상태로 유지된다.
+현재 CLI와 운영 API 코드 버전은 `0.4.0.dev2`이다. CLI 자동 업데이트는 서명된 wheel과 manifest를 발행한 뒤에만 활성화된다.
 
 **현재 사용자용 웹 화면은 없다. 서비스 주소는 CLI가 사용하는 API 서버이며, 웹 UI는 추후 작업이다.**
 
