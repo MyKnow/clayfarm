@@ -6,7 +6,7 @@
 |---|---|
 | GitHub | MyKnow/clayfarm, Private, main. 첫 코드 커밋 d6192476b1b0455d49f2baffd1490fb9b87ce7ed 업로드 및 원격 SHA 일치 |
 | API 호스트 | MyKnow 홈서버. clayfarm-api-1 healthy, UID 10001, 읽기 전용 루트, 127.0.0.1:8765 |
-| API 코드·이미지 | 위 코드 SHA로 홈서버에서 빌드. 이미지 ID sha256:dbb7efbfb83fdaf5114bc6be22b00ac9f032e0547ae38db99faff90e5818b5da |
+| API 코드·이미지 | 키체인 사전 점검 수정 d9841324d40c110e6de3caa7bb2622a3f509cc5a로 갱신. 이미지 ID sha256:49383f8a2447e2eafd9edf157bb138c4736052633c82f63c0a557d6728df1435. 2026-09-14 04:49 UTC 시작, healthy |
 | 운영 데이터 | 기존 ClayFarm Supabase 프로젝트와 private clayfarm bucket 유지 |
 | 중앙 DB 통합 | cf_control 초기화 후 clayfarm_control_queue_bridge 적용. 운영 migration 이력 20260914041144 |
 | 동일 큐 | 기존 farm에 바인딩. health의 queue_backend=public.cf_jobs/cf_tasks, parallel_queue_enabled=false |
@@ -30,7 +30,7 @@ CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 
 
 별도 PostgreSQL에 복원한 뒤 같은 통합 migration을 실행하여 기존 8개 테이블의 행과 내용 해시가 변하지 않음을 확인했다. 복원 시험에서는 소유자를 정규화했고, Supabase 관리 플랫폼과 Storage 파일 본문까지 복원한 재해 복구 시험은 아니다. 운영 Storage 파일은 변경하지 않았다.
 
-서버 백업: /srv/backups/clayfarm/preflight-20260914/ (root 전용). 서버 비밀 설정: /etc/myknow/secrets/clayfarm.env (root, 0600). 실행 설정은 /opt/clayfarm/config-candidate-20260914/에 있으며 가동 시 main·edge·TLS Compose 세 파일을 함께 사용했다. 실행 이미지와 설정을 보존하며 down -v나 큐 초기화를 사용하지 않는다.
+서버 백업: /srv/backups/clayfarm/preflight-20260914/ (root 전용). 서버 비밀 설정: /etc/myknow/secrets/clayfarm.env (root, 0600). 현재 실행 환경은 /opt/clayfarm/config-vault-20260914/deploy.env이며 해당 코드 release의 main·edge·TLS Compose 세 파일을 함께 사용한다. 이전 d619247 이미지와 /opt/clayfarm/config-candidate-20260914/ 설정도 복구용으로 보존했다. down -v나 큐 초기화를 사용하지 않는다.
 
 ## 남은 검증
 

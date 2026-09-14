@@ -9,6 +9,7 @@
 - 신규 회귀 검사에서 변경 전 10개 실패를 확인했다. 저장소 잠금 시 메일 발송·코드 입력·검증 중단, 기존 세션/노드 키 보존, 임시 항목 정리, backend 세부 오류 미노출, 성공 시 세션 저장을 검증했다. 관련 검사 27 passed.
 - 기존 core·제어 계층·실제 Blender·journal 포함 회귀: **189 passed, 12 subtests passed**. 이전 중앙 PostgreSQL/Storage 및 실장비 모델 검사와 합산하지 않는다. 로그는 ignored `work/publish-preflight-20260914/vault-regression.log`다.
 - 실제 Mac의 `auth check-vault`도 메일 요청 없이 vault_locked를 반환했다. 본인 키체인 잠금 해제 후 실제 저장 성공 확인은 남아 있다.
+- 수정 코드 d9841324d40c110e6de3caa7bb2622a3f509cc5a의 GitHub push 후 홈서버에서 이미지 빌드·pip check·신규 CLI 명령 포함을 검증하고 갱신했다. API healthy이며 이전 이미지·설정·데이터 볼륨을 보존했다. 신규 변경 파일의 Gitleaks 검사에서 노출 없음.
 
 ## 운영 적용 검증 — 2026-09-14
 
