@@ -6,7 +6,7 @@
 |---|---|
 | GitHub | MyKnow/clayfarm, Private, main. 첫 코드 커밋 d6192476b1b0455d49f2baffd1490fb9b87ce7ed 업로드 및 원격 SHA 일치 |
 | API 호스트 | MyKnow 홈서버. clayfarm-api-1 healthy, UID 10001, 읽기 전용 루트, 127.0.0.1:8765 |
-| API 코드·이미지 | MFA 재개·등록 직후 검증 수정 4a1cc08ef7a4319d9b48ef003fdcaff3ae8ef6d1로 갱신. 이미지 ID sha256:b1e3b78b9787712035e76ee301c360c5488bf7cdce2a2e34b10ea1f27d3750cb. 2026-09-14 05:29 UTC 시작, healthy |
+| API 코드·이미지 | CLI 버전·signed update feed·로컬 Text-to-Sound 확장을 포함한 `1f7cb52`로 갱신. 이미지 ID sha256:903b0e2589a06c0f966f0985db3989017a46e43bb91d87ab1c1bd1c566356a45. `clayfarm --version`과 `/health`의 `0.4.0.dev1` 일치, 2026-09-14 healthy |
 | 운영 데이터 | 기존 ClayFarm Supabase 프로젝트와 private clayfarm bucket 유지 |
 | 중앙 DB 통합 | cf_control 초기화 후 clayfarm_control_queue_bridge 적용. 운영 migration 이력 20260914041144 |
 | 동일 큐 | 기존 farm에 바인딩. health의 queue_backend=public.cf_jobs/cf_tasks, parallel_queue_enabled=false |
@@ -23,6 +23,7 @@
 | 실제 로그인 권한 | 공개 HTTPS에서 관리자 계정 /v1/me 200·admin 역할 확인. AAL1의 관리자 요청 조회 403 mfa_required, TOTP 후 AAL2 관리자 경로 200. 미등록 장비 경로 401 unknown_device |
 | Mac 노드 | 실제 신청·AAL2 승인·Ed25519 노드 인증·중앙 heartbeat 성공. Blender만 허용, 실제 5.2.1 자가 점검 통과. AI 모델 ready와 별개 |
 | Unity | FBX Medium 고정 및 StaticMeshes 조건부 규칙 포함. Mac Unity 실제 임포트 8개 시나리오 통과 |
+| CLI 업데이트 | `/v1/updates/check?channel=stable&platform_os=linux&platform_arch=amd64`가 signed manifest가 없는 현재 운영 update root에서 `update_available=false`·`latest=null`을 반환. wheel과 서명키를 발행하기 전까지 운영 자동 수신을 활성화하지 않음 |
 
 CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 DB/RLS 오류는 없었고, 기존 비밀번호 유출 검사 비활성 경고가 남아 있다([공식 설명](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)).
 
