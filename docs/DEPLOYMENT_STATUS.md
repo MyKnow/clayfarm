@@ -23,7 +23,7 @@
 | 실제 로그인 권한 | 공개 HTTPS에서 관리자 계정 /v1/me 200·admin 역할 확인. AAL1의 관리자 요청 조회 403 mfa_required, TOTP 후 AAL2 관리자 경로 200. 미등록 장비 경로 401 unknown_device |
 | Mac 노드 | 실제 신청·AAL2 승인·Ed25519 노드 인증·중앙 heartbeat 성공. Blender만 허용, 실제 5.2.1 자가 점검 통과. AI 모델 ready와 별개 |
 | Unity | FBX Medium 고정 및 StaticMeshes 조건부 규칙 포함. Mac Unity 실제 임포트 8개 시나리오 통과 |
-| CLI 업데이트 | 운영 API의 `/v1/updates/check?channel=stable&platform_os=linux&platform_arch=amd64`가 `current_version=0.4.0.dev2`, `update_available=false`, `latest=null`을 반환. signed wheel·manifest를 발행하기 전까지 자동 수신은 비활성 상태 |
+| CLI 업데이트 | 운영 API가 signed manifest `control-0-4-0-dev2-1-any-any`와 wheel(`e684c0e1a31d8dc2863718b947d4ebc7aca155e376e8a0d4229ef7520ab21c5a`, 138326 bytes)를 제공한다. 공개키 지문은 `f6788c70db6ec16537f7fdc116a98dbb7fe18a22a75854dc1fe3630ede6427e8`; Mac CLI에서 서명·hash 검증 후 download staging을 완료했다. 현재 버전이 동일하므로 CLI 결과의 `update_available=false`는 정상이다. |
 
 CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 DB/RLS 오류는 없었고, 기존 비밀번호 유출 검사 비활성 경고가 남아 있다([공식 설명](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)).
 

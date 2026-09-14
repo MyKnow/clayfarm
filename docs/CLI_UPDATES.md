@@ -15,7 +15,7 @@ ClayFarm Control의 버전은 [`src/clayfarm_control/version.py`](../src/clayfar
   추가했다. `draft` 결과는 항상 `needs_review`이며 자동 승인을 수행하지 않는다.
 - 방향 카드의 hash·compiler version·seed를 `direction-manifest.json`에 기록한다.
 - 이 릴리스는 로컬 계약·컴파일러 변경이며, 중앙 3D 큐·웹 UI·신경망 모델 ready 상태를
-  열지 않는다. 운영 update feed와 signed wheel은 별도 발행 전까지 활성화되지 않는다.
+  열지 않는다. 운영 API에는 `v0.4.0.dev2` signed wheel과 manifest가 발행되어 있다.
 
 ## 사용자
 
@@ -39,6 +39,14 @@ clayfarm update apply --yes
 ```sh
 clayfarm trust add --key-id control-release --public-key-file release.pub
 clayfarm trust list
+```
+
+현재 운영키의 공개 부분은 [`keys/control-release.pub`](../keys/control-release.pub)이며
+SHA-256 지문은 `f6788c70db6ec16537f7fdc116a98dbb7fe18a22a75854dc1fe3630ede6427e8`이다.
+지문을 별도 채널에서 확인한 뒤 다음처럼 등록한다.
+
+```sh
+clayfarm trust add --key-id control-release --public-key-file keys/control-release.pub
 ```
 
 키가 등록되지 않았거나 manifest·wheel이 변조되면 CLI는 설치하지 않고 오류를 반환한다.
