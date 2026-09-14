@@ -45,6 +45,26 @@ clayfarm models generate sa3-small-music-cpu \
 기존 `SoundManager`/`AudioMixer`에 연결한다. 전체 BGM/SFX 필드와 실패·검수
 경계는 [AUDIO_PIPELINE](docs/AUDIO_PIPELINE.md)을 따른다.
 
+### 절차적 SFX 후보 (`procedural-sfx`)
+
+`procedural-sfx`는 모델 가중치·다운로드 없이 Python 표준 라이브러리 연산만으로
+`beep`, `whoosh`, `impact`, `sword_swing`을 만드는 내장 프로필이다. 결과는
+48 kHz 모노 PCM `asset.wav` 하나이며 `details.neural`은 항상 `false`다. 같은
+`seed`·`seconds`·`frequency`에서는 항상 같은 바이트가 나온다.
+
+```sh
+# 내장 프로필 준비 (확인 프롬프트 승인 필요, 다운로드 없음)
+clayfarm models sync --profile procedural-sfx
+clayfarm models verify procedural-sfx
+
+clayfarm models generate procedural-sfx \
+  --spec examples/sfx-sword-swing.json --out ./audio/sfx/sword-swing
+```
+
+이 출력은 Stable Audio 등 신경망 모델 결과가 아니고 게임에 바로 쓸 완성
+사운드도 아니다. 다른 오디오와 마찬가지로 사람이 `asset.wav`를 청취 승인한
+뒤에만 Unity 연결 단계로 넘긴다.
+
 ## Unity 임포트
 
 ClayFarm FBX의 Mesh Compression은 **Medium 고정**이다. 리그·블렌드셰이프·모델 내부 애니메이션을 모두 사용하지 않는 에셋에는 Import BlendShapes 끄기, Animation Type None, Import Animation 끄기를 적용한다. Unity용 Editor 스크립트와 분류·설치 방법은 [UNITY_IMPORT_POLICY](docs/UNITY_IMPORT_POLICY.md)를 따른다.

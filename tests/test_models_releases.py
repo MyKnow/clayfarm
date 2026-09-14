@@ -1,4 +1,4 @@
-import copy,time,json,wave,sys,subprocess,os
+import copy,time,json,struct,wave,sys,subprocess,os
 from pathlib import Path
 import pytest
 from clayfarm_control.common import CFError,sha,canonical
@@ -47,6 +47,40 @@ def test_svg_escapes_untrusted_text(tmp_path):
 @pytest.mark.parametrize("spec",[{"seconds":float("nan")},{"seconds":-1},{"effect":"run_shell"},{"command":"rm -rf"}])
 def test_bad_asset_spec_rejected(spec):
     with pytest.raises(CFError):validate_spec("procedural-sfx",spec)
+
+@pytest.mark.parametrize("effect",["beep","whoosh","impact","sword_swing"])
+def test_sfx_effects_accepted(effect):
+    assert validate_spec("procedural-sfx",{"effect":effect})["effect"]==effect
+
+@pytest.mark.parametrize("spec",[{"effect":"sword-swing"},{"effect":"SWORD_SWING"},{"effect":"katana_slash"},{"effect":"sword_swing","seconds":0},{"effect":"sword_swing","seconds":5.1},{"effect":"sword_swing","frequency":16001},{"effect":"sword_swing","frequency":39},{"effect":"sword_swing","seed":-1},{"effect":"sword_swing","gain":2}])
+def test_sword_swing_spec_bounds_enforced(spec):
+    with pytest.raises(CFError):validate_spec("procedural-sfx",spec)
+
+def sword_frames(tmp_path,name,**overrides):
+    spec={"effect":"sword_swing","seconds":.35,"frequency":1400,"seed":7,**overrides}
+    path,details=generate("procedural-sfx",spec,tmp_path/name)
+    with wave.open(str(path)) as f:
+        assert f.getnchannels()==1 and f.getsampwidth()==2 and f.getframerate()==48000
+        frames=f.readframes(f.getnframes())
+    return list(struct.unpack("<%dh"%(len(frames)//2),frames)),details
+
+def test_sword_swing_is_deterministic_pcm_wav(tmp_path):
+    first,details=sword_frames(tmp_path,"a")
+    again,_=sword_frames(tmp_path,"b")
+    other,_=sword_frames(tmp_path,"c",seed=8)
+    assert first==again and first!=other
+    assert len(first)==16800 and details["sample_rate"]==48000 and details["channels"]==1
+    assert details["kind"]=="sfx" and details["neural"] is False
+
+def test_sword_swing_has_audible_attack_and_decay(tmp_path):
+    samples,_=sword_frames(tmp_path,"swing")
+    rms=lambda seg:(sum(v*v for v in seg)/len(seg))**.5
+    quarter=len(samples)//4
+    peak=max(abs(v) for v in samples)
+    assert 3000<peak<=int(.8*32767)  # audible, still inside the adapter's clip guard
+    assert samples[0]==0 and abs(samples[-1])<peak//8  # click-free start and tail
+    assert max(range(len(samples)),key=lambda i:abs(samples[i]))<quarter  # short attack: loudest point is early
+    assert rms(samples[:quarter])>4*rms(samples[-quarter:])  # decaying whoosh body
 
 def test_cpu_sync_verify_generate(tmp_path):
     m=Models(tmp_path,load_registry());state=m.builtin_sync("procedural-sfx")

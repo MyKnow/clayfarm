@@ -2,6 +2,13 @@
 
 첨부 패키지 작성 당시 결과는 [TEST_REPORT_UPSTREAM](docs/TEST_REPORT_UPSTREAM.md)에 보존했다.
 
+## 검 휘두르기 절차적 SFX 후보 — 2026-09-14
+
+- `$claude-worker` Opus 스냅샷에서 `procedural-sfx`의 `sword_swing` 검증·구현·문서 변경을 검토하고 원 저장소에 적용했다.
+- 실제 CLI 경로로 `examples/sfx-sword-swing.json`을 실행했다. 48 kHz mono PCM16, 0.35초 후보, clipping 0, peak -1 dBFS, RMS -19.242 dBFS를 확인했다.
+- 전체 회귀 실행: **177 passed, 2 skipped**. 기존 `beep`·`whoosh`·`impact` 출력은 변경 전과 바이트 동일하다.
+- 이 결과는 `neural:false`인 절차적 후보다. Stable Audio 모델 실행, 중앙 오디오 큐, Unity 최종 청취 승인을 의미하지 않는다.
+
 ## CLI 버전·업데이트 — 2026-09-14
 
 - `src/clayfarm_control/version.py`를 단일 버전 원천으로 만들고 pyproject metadata, CLI `--version`, API `/health`, bundled release ID가 `0.4.0.dev1`을 일치하게 광고하는지 확인했다.
