@@ -12,13 +12,23 @@ import wave
 from pathlib import Path
 
 from .common import CFError, atomic_json
+from .sound_direction import (
+    validate_direction,
+    validate_source_text,
+    validate_source_text_hash,
+)
 
 BGM_PROFILES = {"sa3-small-music-cpu", "sa3-small-music-cuda", "sa3-small-music-mlx"}
 SFX_PROFILES = {"sa3-small-cpu", "sa3-small-cuda", "sa3-small-mlx"}
 AUDIO_PROFILES = BGM_PROFILES | SFX_PROFILES
 TRACK_IDS = {"lobby", "preparation", "combat", "result"}
+SFX_SCHEMA_VERSIONS = (1, 2)
 _BGM_FIELDS = {"track_id", "prompt", "duration_seconds", "bpm", "loop_required", "seed", "negative_prompt"}
-_SFX_FIELDS = {"event_id", "prompt", "duration_seconds", "variation_count", "seed", "negative_prompt"}
+_SFX_FIELDS = {"event_id", "prompt", "duration_seconds", "variation_count", "seed", "negative_prompt", "schema_version"}
+#: Schema v2 adds the Sound Direction Card and its source-text provenance.  It
+#: deliberately adds no model settings: sampler/steps/checkpoint stay
+#: profile-locked and are still rejected as unknown fields.
+_SFX_V2_FIELDS = _SFX_FIELDS | {"schema_version", "direction", "source_text", "source_text_hash"}
 
 
 def _number(value, low, high, name, *, integer=False):
@@ -34,6 +44,27 @@ def _number(value, low, high, name, *, integer=False):
 def _prompt(value, name="prompt"):
     if not isinstance(value, str) or not 1 <= len(value) <= 2000:
         raise CFError("invalid_spec", f"Provide {name} with 1..2000 characters")
+
+
+def _validate_sfx_v2_direction(spec: dict) -> None:
+    """Validate the schema v2 direction card and its source-text provenance.
+
+    ``prompt`` stays accepted in v2, but only as the artist's source note: the
+    compiler hashes it and builds the model prompt from the card instead.
+    """
+    if "direction" not in spec:
+        raise CFError("invalid_spec", "schema_version 2 requires a direction card")
+    validate_direction(spec["direction"])
+    source = None
+    if "source_text" in spec:
+        source = validate_source_text(spec["source_text"])
+    if "prompt" in spec:
+        legacy = validate_source_text(spec["prompt"], "prompt")
+        if source is not None and legacy != source:
+            raise CFError("invalid_spec", "prompt and source_text disagree; send only source_text")
+        source = source if source is not None else legacy
+    if "source_text_hash" in spec:
+        validate_source_text_hash(spec["source_text_hash"], source)
 
 
 def validate_audio_spec(profile: str, spec: dict) -> dict:
@@ -58,12 +89,18 @@ def validate_audio_spec(profile: str, spec: dict) -> dict:
             _prompt(spec["negative_prompt"], "negative_prompt")
         return spec
     if profile in SFX_PROFILES:
-        if set(spec) - _SFX_FIELDS:
+        version = spec.get("schema_version", 1)
+        if isinstance(version, bool) or version not in SFX_SCHEMA_VERSIONS:
+            raise CFError("invalid_spec", "schema_version must be 1 or 2")
+        if set(spec) - (_SFX_V2_FIELDS if version == 2 else _SFX_FIELDS):
             raise CFError("invalid_spec", "Unknown SFX field")
         event = spec.get("event_id")
         if not isinstance(event, str) or not 1 <= len(event) <= 120:
             raise CFError("invalid_spec", "event_id must be 1..120 characters")
-        _prompt(spec.get("prompt"))
+        if version == 2:
+            _validate_sfx_v2_direction(spec)
+        else:
+            _prompt(spec.get("prompt"))
         _number(spec.get("duration_seconds", 1), 0.05, 12, "duration_seconds")
         _number(spec.get("variation_count", 1), 1, 8, "variation_count", integer=True)
         _number(spec.get("seed", 0), 0, 2**32 - 1, "seed", integer=True)

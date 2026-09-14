@@ -48,7 +48,7 @@ def test_svg_escapes_untrusted_text(tmp_path):
 def test_bad_asset_spec_rejected(spec):
     with pytest.raises(CFError):validate_spec("procedural-sfx",spec)
 
-@pytest.mark.parametrize("effect",["beep","whoosh","impact","sword_swing"])
+@pytest.mark.parametrize("effect",["beep","whoosh","impact","sword_swing","wind_whoosh"])
 def test_sfx_effects_accepted(effect):
     assert validate_spec("procedural-sfx",{"effect":effect})["effect"]==effect
 
@@ -81,6 +81,22 @@ def test_sword_swing_has_audible_attack_and_decay(tmp_path):
     assert samples[0]==0 and abs(samples[-1])<peak//8  # click-free start and tail
     assert max(range(len(samples)),key=lambda i:abs(samples[i]))<quarter  # short attack: loudest point is early
     assert rms(samples[:quarter])>4*rms(samples[-quarter:])  # decaying whoosh body
+
+def test_wind_whoosh_is_deterministic_non_tonal_candidate(tmp_path):
+    first,details=sword_frames(tmp_path,"wind",effect="wind_whoosh",seconds=.18,frequency=2200,seed=23)
+    again,_=sword_frames(tmp_path,"wind-again",effect="wind_whoosh",seconds=.18,frequency=2200,seed=23)
+    other,_=sword_frames(tmp_path,"wind-other",effect="wind_whoosh",seconds=.18,frequency=2200,seed=24)
+    assert first==again and first!=other
+    assert len(first)==8640 and details["sample_rate"]==48000 and details["channels"]==1
+    assert details["kind"]=="sfx" and details["neural"] is False
+    peak=max(abs(v) for v in first)
+    assert 3000<peak<=int(.8*32767) and first[0]==0 and abs(first[-1])<peak//8
+
+def test_existing_sfx_pcm_is_unchanged_by_wind_branch(tmp_path):
+    for effect in ("beep","whoosh","impact"):
+        before, _ = sword_frames(tmp_path, "before-"+effect, effect=effect, seconds=.13, frequency=1234, seed=99)
+        after, _ = sword_frames(tmp_path, "after-"+effect, effect=effect, seconds=.13, frequency=1234, seed=99)
+        assert before == after
 
 def test_cpu_sync_verify_generate(tmp_path):
     m=Models(tmp_path,load_registry());state=m.builtin_sync("procedural-sfx")

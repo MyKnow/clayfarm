@@ -1,4 +1,4 @@
-# 구현 상태 — 2026-09-14 / 0.4.0.dev1 Work 통합
+# 구현 상태 — 2026-09-14 / 0.4.0.dev2 Work 통합
 
 이 문서는 현재 저장소 상태다. 첨부 패키지 작성 당시 상태는 [IMPLEMENTATION_STATUS_UPSTREAM](IMPLEMENTATION_STATUS_UPSTREAM.md)에 보존했다. **운영 통합과 전체 모델 검증 완료를 선언하지 않는다.**
 
@@ -53,6 +53,12 @@ Python 어댑터의 실패 폐쇄 경로다. CPU/CUDA/MLX 모델 가중치·의�
 모두 candidate이며 `ready=false`다. Stable Audio 어댑터가 실제 생성한
 출력도 사람 청취 승인 전에는 Unity에 연결하지 않는다. 상세 계약과 명령은
 [AUDIO_PIPELINE](AUDIO_PIPELINE.md)에 기록했다.
+
+schema version 2 SFX에는 `Sound Direction Card`와 `source_text` provenance가
+추가됐다. 방향 카드는 통제된 action·시간·스펙트럼·공간·필수/금지 요소로
+정규화되고, 모델별 컴파일러가 원문을 전달하지 않은 결정적 prompt payload를
+만든다. `audio direction validate/compile` CLI와 검토용 예제를 제공하지만,
+중앙 큐·웹 UI·후보 묶음 artifact는 아직 열지 않았다.
 
 ## 하나의 큐라는 의미
 

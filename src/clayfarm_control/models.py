@@ -18,7 +18,7 @@ class Models:
         return result
     def adapter_digest(self,pid):
         base=Path(__file__).parent
-        paths=[base/"runtime.py",base/"models.py",base/"adapters/builtin.py",base/"adapters/diffusers_image.py",base/"adapters/stable_audio.py",base/"audio.py",base/"process.py",base/"inventory.py",base/"registry.py"]
+        paths=[base/"runtime.py",base/"models.py",base/"adapters/builtin.py",base/"adapters/diffusers_image.py",base/"adapters/stable_audio.py",base/"audio.py",base/"sound_direction.py",base/"process.py",base/"inventory.py",base/"registry.py"]
         return sha(b"".join(p.read_bytes() for p in paths)+pid.encode())
     def environment_fingerprint(self,python):
         script="import importlib.metadata as m,json,sys; print(json.dumps({'python':sys.version,'packages':sorted((d.metadata['Name'],d.version) for d in m.distributions() if d.metadata.get('Name'))},sort_keys=True))"

@@ -10,7 +10,8 @@ import importlib
 from pathlib import Path
 
 from ..audio import AUDIO_PROFILES, normalize_wav, validate_audio_spec
-from ..common import CFError
+from ..common import CFError, atomic_json
+from ..sound_direction import compile_sfx_request
 
 
 def _device(profile):
@@ -45,6 +46,10 @@ def generate(profile: dict, spec: dict, model_dir: Path, out: Path):
     validate_audio_spec(profile_id, spec)
     if profile_id.startswith("sa3-small-") and not profile_id.startswith("sa3-small-music") and spec.get("variation_count", 1) != 1:
         raise CFError("audio_variations_not_implemented", "Generate one SFX variation per job until the bundle artifact contract is enabled")
+    # Compile and validate the direction before loading the pinned model. This
+    # keeps malformed cards cheap to reject and ensures the model never sees
+    # the artist's source text.
+    compiled = None if profile_id.startswith("sa3-small-music") else compile_sfx_request(spec)
     device = _device(profile)
     model_dir = Path(model_dir)
     if not model_dir.is_dir() or model_dir.resolve() == Path(".").resolve() or not any(model_dir.iterdir()):
@@ -82,14 +87,24 @@ def generate(profile: dict, spec: dict, model_dir: Path, out: Path):
             model = model_cls.from_pretrained(model_name, device=device)
         finally:
             all_models[model_name] = original_config
+        if profile_id.startswith("sa3-small-music"):
+            prompt = spec["prompt"]
+            duration = float(spec.get("duration_seconds", settings.get("duration_seconds", 5)))
+            seed = int(spec.get("seed", 0))
+            negative_prompt = spec.get("negative_prompt")
+        else:
+            prompt = compiled["prompt"]
+            duration = compiled["duration_seconds"]
+            seed = compiled["seed"]
+            negative_prompt = compiled["negative_prompt"]
         kwargs = {
-            "prompt": spec["prompt"],
-            "duration": float(spec.get("duration_seconds", settings.get("duration_seconds", 5))),
-            "seed": int(spec.get("seed", 0)),
+            "prompt": prompt,
+            "duration": duration,
+            "seed": seed,
             "steps": int(settings.get("steps", 8)),
         }
-        if "negative_prompt" in spec:
-            kwargs["negative_prompt"] = spec["negative_prompt"]
+        if negative_prompt:
+            kwargs["negative_prompt"] = negative_prompt
         if "cfg_scale" in settings:
             kwargs["cfg_scale"] = float(settings["cfg_scale"])
         audio = model.generate(**kwargs)
@@ -134,4 +149,16 @@ def generate(profile: dict, spec: dict, model_dir: Path, out: Path):
         "seed": spec.get("seed", 0),
         "audio_report": report,
     }
+    if not profile_id.startswith("sa3-small-music"):
+        details.update({
+            "direction_present": bool(compiled and compiled["direction_present"]),
+            "direction_card_hash": compiled.get("card_hash") if compiled else None,
+            "direction_compiler_version": compiled.get("compiler_version") if compiled else None,
+            "source_text_hash": compiled.get("source_text_hash") if compiled else None,
+            "source_text_used_as_prompt": compiled.get("source_text_used_as_prompt") if compiled else True,
+        })
+        if compiled and compiled["direction_present"]:
+            # Keep the reviewed direction and exact compiled request beside the
+            # master. This is provenance, not a readiness or approval claim.
+            atomic_json(Path(out) / "direction-manifest.json", compiled)
     return artifact, details

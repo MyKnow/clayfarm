@@ -57,6 +57,18 @@ def parser():
     x=a.add_parser("sync");x.add_argument("--profile");x.add_argument("--recipe",type=Path);x.add_argument("--accept-license",action="store_true");x.add_argument("--allow-download",action="store_true")
     x=a.add_parser("verify");x.add_argument("profile_id");x.add_argument("--spec",type=Path)
     x=a.add_parser("generate");x.add_argument("profile_id");x.add_argument("--spec",type=Path,required=True);x.add_argument("--out",type=Path,required=True)
+    au=s.add_parser("audio", help="Compile reviewed Sound Direction Cards and run local audio profiles")
+    aus=au.add_subparsers(dest="audio_action", required=True)
+    ad=aus.add_parser("direction", help="Validate or compile a Sound Direction Card")
+    ads=ad.add_subparsers(dest="direction_action", required=True)
+    x=ads.add_parser("draft", help="Turn an artist note into a reviewable card suggestion")
+    x.add_argument("--source-text",required=True);x.add_argument("--category");x.add_argument("--sound-action",dest="sound_action")
+    x.add_argument("--event-id");x.add_argument("--out",type=Path)
+    for name in ("validate", "compile"):
+        x=ads.add_parser(name);x.add_argument("--spec",type=Path,required=True)
+        if name=="compile": x.add_argument("--variation-index",type=int,default=0)
+    x=aus.add_parser("generate", help="Generate an approved local audio profile from a direction spec")
+    x.add_argument("profile_id");x.add_argument("--spec",type=Path,required=True);x.add_argument("--out",type=Path,required=True)
     a=s.add_parser("trust").add_subparsers(dest="action",required=True)
     x=a.add_parser("add");x.add_argument("--key-id",required=True);x.add_argument("--public-key-file",type=Path,required=True)
     a.add_parser("list")
@@ -164,6 +176,48 @@ def dispatch(a):
         if act=="describe":return get_profile(registry,a.profile_id)
         from .registry import ADAPTERS
         return {"registry_revision":registry["registry_revision"],"profiles":[{"id":p["id"],"backend":p["backend"],"asset_kinds":p["asset_kinds"],"adapter_implemented":p["id"] in ADAPTERS,"node_ready":False} for p in registry["profiles"]]}
+    if g=="audio":
+        from .sound_direction import compile_direction, compile_sfx_request, draft_direction, source_text_hash, validate_direction
+        if a.audio_action=="direction":
+            if a.direction_action=="draft":
+                draft=draft_direction(a.source_text,category=a.category,action=a.sound_action)
+                if a.out:
+                    if not a.event_id:
+                        raise CFError("invalid_args","--event-id is required when writing a full SFX spec")
+                    if a.out.exists():
+                        raise CFError("output_exists","Refusing to overwrite an existing output")
+                    direction=draft["direction"]
+                    spec={
+                        "schema_version":2,
+                        "event_id":a.event_id,
+                        "source_text":a.source_text,
+                        "source_text_hash":source_text_hash(a.source_text),
+                        "direction":direction,
+                        "duration_seconds":0.18 if direction["action"]=="whoosh" else 1.0,
+                        "variation_count":1,
+                        "seed":0,
+                    }
+                    atomic_json(a.out,spec)
+                    draft["spec_path"]=str(a.out.resolve())
+                return draft
+            raw=read_json(a.spec)
+            if not isinstance(raw,dict): raise CFError("invalid_spec","An object is required")
+            direction=raw.get("direction",raw)
+            if a.direction_action=="validate":
+                if "direction" in raw:
+                    from .audio import validate_audio_spec
+                    validate_audio_spec("sa3-small-cpu",raw)
+                card=validate_direction(direction)
+                return {"valid":True,"schema_version":card["schema_version"],"direction":card}
+            if "direction" in raw:
+                # Reuse the public SFX boundary so unknown fields and provenance
+                # are checked before a model payload is emitted.
+                from .audio import validate_audio_spec
+                validate_audio_spec("sa3-small-cpu",raw)
+                return compile_sfx_request(raw,variation_index=a.variation_index)
+            return compile_direction(direction,variation_index=a.variation_index)
+        if a.audio_action=="generate":
+            return Models(home,registry).generate(a.profile_id,read_json(a.spec),a.out)
     if g=="models":
         m=Models(home,registry)
         if act=="plan":

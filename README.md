@@ -1,6 +1,8 @@
-# ClayFarm Work — 0.4.0.dev1 integration
+# ClayFarm Work — 0.4.0.dev2 integration
 
 새 CLI의 승인 계정·Ed25519 노드 인증을 기존 ClayFarm의 **동일한 PostgreSQL 3D DAG와 private Storage**로 연결한 개발 저장소다. MyKnow 홈서버에 중앙 API와 운영 DB 통합을 적용했고 공개 HTTPS·실제 이메일 로그인·Mac 자격증명 저장을 확인했다. 실제 MFA·Mac 노드 승인과 새 CLI 제출 → 기존 Windows TripoSR → 새 Mac Blender → 결과 다운로드를 같은 운영 큐에서 확인했다. Windows 새 CLI 전환·전체 모델 검증은 남아 있다.
+
+현재 로컬 코드 버전은 `0.4.0.dev2`이며, 운영 API는 서명 wheel/feed를 발행하기 전까지 기존 `0.4.0.dev1` 상태로 유지된다.
 
 **현재 사용자용 웹 화면은 없다. 서비스 주소는 CLI가 사용하는 API 서버이며, 웹 UI는 추후 작업이다.**
 
@@ -45,10 +47,28 @@ clayfarm models generate sa3-small-music-cpu \
 기존 `SoundManager`/`AudioMixer`에 연결한다. 전체 BGM/SFX 필드와 실패·검수
 경계는 [AUDIO_PIPELINE](docs/AUDIO_PIPELINE.md)을 따른다.
 
+### 사운드 방향 카드
+
+사용자 문장을 모델 프롬프트로 직접 보내지 않으려면 schema version 2 SFX
+스펙의 `direction` 카드를 작성한다. 카드는 검토 가능한 action·attack·tail·
+주파수 sweep·필수 요소·금지 요소를 담고, `source_text`는 추적용 해시로만
+보존한다. 다음 명령으로 카드와 모델 입력을 각각 확인할 수 있다.
+
+```sh
+clayfarm audio direction validate --spec examples/sfx-sword-whoosh-direction.json
+clayfarm audio direction compile --spec examples/sfx-sword-whoosh-direction.json
+clayfarm audio generate sa3-small-cpu \
+  --spec examples/sfx-sword-whoosh-direction.json --out ./audio/sfx/sword-whoosh
+```
+
+컴파일된 prompt에는 원문이 포함되지 않으며, 모델 프로필이 지원하지 않는
+negative/reference 조건은 자동 검수 조건으로 남는다. 전체 카드 필드와
+후보·승인 경계는 [AUDIO_PIPELINE](docs/AUDIO_PIPELINE.md)에 기록한다.
+
 ### 절차적 SFX 후보 (`procedural-sfx`)
 
 `procedural-sfx`는 모델 가중치·다운로드 없이 Python 표준 라이브러리 연산만으로
-`beep`, `whoosh`, `impact`, `sword_swing`을 만드는 내장 프로필이다. 결과는
+`beep`, `whoosh`, `impact`, `sword_swing`, `wind_whoosh`를 만드는 내장 프로필이다. 결과는
 48 kHz 모노 PCM `asset.wav` 하나이며 `details.neural`은 항상 `false`다. 같은
 `seed`·`seconds`·`frequency`에서는 항상 같은 바이트가 나온다.
 
@@ -60,6 +80,9 @@ clayfarm models verify procedural-sfx
 clayfarm models generate procedural-sfx \
   --spec examples/sfx-sword-swing.json --out ./audio/sfx/sword-swing
 ```
+
+금속성 요소를 제외한 짧은 “휙” 후보는 `examples/sfx-wind-whoosh.json`을
+사용한다. 두 효과 모두 절차적 후보이므로 `asset.wav`를 직접 듣고 선택한다.
 
 이 출력은 Stable Audio 등 신경망 모델 결과가 아니고 게임에 바로 쓸 완성
 사운드도 아니다. 다른 오디오와 마찬가지로 사람이 `asset.wav`를 청취 승인한

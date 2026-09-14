@@ -21,7 +21,7 @@ def validate_spec(profile,spec):
         if not isinstance(spec.get("radius",16),(int,float)) or not 0<=spec.get("radius",16)<=128: raise CFError("invalid_spec","Radius must be 0..128")
     elif profile=="procedural-sfx":
         if set(spec)-{"effect","seconds","frequency","seed"}: raise CFError("invalid_spec","Unknown SFX field")
-        if spec.get("effect","beep") not in ("beep","whoosh","impact","sword_swing"): raise CFError("invalid_spec","Effect must be beep, whoosh, impact, or sword_swing")
+        if spec.get("effect","beep") not in ("beep","whoosh","impact","sword_swing","wind_whoosh"): raise CFError("invalid_spec","Effect must be beep, whoosh, impact, sword_swing, or wind_whoosh")
         for key,default,low,high in (("seconds",.4,.05,5),("frequency",880,40,16000)):
             value=spec.get(key,default)
             if not isinstance(value,(int,float)) or not math.isfinite(value) or not low<=value<=high: raise CFError("invalid_spec",f"{key} is outside limits")
@@ -42,7 +42,7 @@ def generate(profile,spec,out: Path):
         path=out/"asset.svg"; path.write_text(svg,encoding="utf-8")
         return path,{"kind":"ui_source","width":w,"height":h,"neural":False,"interactive_ui":False}
     if profile=="procedural-sfx":
-        rate=48000; seconds=spec.get("seconds",.4); n=int(rate*seconds); freq=spec.get("frequency",880); rng=random.Random(spec.get("seed",0)); data=bytearray(); effect=spec.get("effect","beep"); lp1=lp2=lp_prev=0.
+        rate=48000; seconds=spec.get("seconds",.4); n=int(rate*seconds); freq=spec.get("frequency",880); rng=random.Random(spec.get("seed",0)); data=bytearray(); effect=spec.get("effect","beep"); lp1=lp2=lp_prev=0.; low=high=0.; gust_phase=rng.random()*2*math.pi if effect=="wind_whoosh" else 0.
         for i in range(n):
             t=i/rate; u=i/max(1,n-1); envelope=min(1,u*30)*min(1,(1-u)*30)
             if effect=="beep": x=math.sin(2*math.pi*freq*t)*math.exp(-u*4)
@@ -54,6 +54,20 @@ def generate(profile,spec,out: Path):
                 lp1+=a*(rng.uniform(-1,1)-lp1); lp2+=a*(lp1-lp2)
                 air=(lp2-lp_prev)/(a*math.sqrt(a)*(.25+.55*a)); lp_prev=lp2
                 x=(.45*air*min(1,t*400)+.35*math.sin(2*math.pi*freq*(1.6-u)*t)*math.exp(-u*16))*math.exp(-u*4.5)
+            elif effect=="wind_whoosh":
+                # Short blade swish: a fast attack, descending noise sweep, and tight decay.
+                # It has no pitched carrier, so it reads as air being cut rather than air being blown.
+                low_cut=1100+2600*u
+                high_cut=14500-6500*u
+                low_a=1-math.exp(-2*math.pi*low_cut/rate)
+                high_a=1-math.exp(-2*math.pi*high_cut/rate)
+                noise=rng.uniform(-1,1)
+                low+=low_a*(noise-low); high+=high_a*(noise-high)
+                air=noise-high
+                body=.95*(high-low)+.60*air
+                envelope=(1-math.exp(-t/.0045))*math.exp(-t/.065)*min(1,(1-u)*18)
+                gust=.96+.04*math.sin(2*math.pi*(5+2*u)*t+gust_phase)
+                x=body*envelope*gust
             else: x=rng.uniform(-1,1)*math.sin(math.pi*u)**2
             data+=struct.pack("<h",int(max(-.8,min(.8,.65*x*envelope))*32767))
         path=out/"asset.wav"

@@ -38,10 +38,80 @@ SFX uses an event contract and variation count instead:
   "event_id": "SwordHit",
   "prompt": "short metallic sword impact with a clay snap",
   "duration_seconds": 0.45,
-  "variation_count": 4,
+  "variation_count": 1,
   "seed": 7
 }
 ```
+
+### Sound Direction Card
+
+An SFX request can use schema version 2 to keep the artist's note separate from
+the model prompt. `source_text` is retained for provenance only. The direction
+card is the reviewed, model-agnostic source of truth; it contains controlled
+tokens for the action, envelope, spectrum, space, positive requirements, and
+exclusions. Model settings such as sampler, dimensions, and batch size remain
+profile locked and cannot be placed in the card.
+
+```json
+{
+  "schema_version": 2,
+  "event_id": "SwordSwish_A",
+  "source_text": "검이 빠르게 공기를 한 번 가르는 짧고 날카로운 휙",
+  "direction": {
+    "schema_version": 1,
+    "category": "weapon",
+    "action": "whoosh",
+    "textures": ["airy", "clean", "hiss"],
+    "must": ["air_cut", "one_transient", "short_whoosh"],
+    "must_not": ["blowing", "breath", "metal_impact", "sustained_wind"],
+    "attack": "instant",
+    "tail": "short",
+    "space": "dry",
+    "brightness": 0.85,
+    "noise_ratio": 0.95,
+    "sweep": "high_to_mid",
+    "frequency_hz": [10000, 3000],
+    "loopable": false
+  },
+  "duration_seconds": 0.18,
+  "variation_count": 1,
+  "seed": 421
+}
+```
+
+The source note is parsed into the card and shown for confirmation before a
+generation job is queued. The adapter receives only the deterministic compiled
+request. For the example above, the compiler produces an English prompt, a
+negative constraint list, the exact duration, and a reproducible seed. It never
+forwards the Korean source note as the model prompt. Use the CLI to inspect the
+two stages:
+
+```sh
+clayfarm audio direction validate \
+  --spec examples/sfx-sword-whoosh-direction.json
+clayfarm audio direction compile \
+  --spec examples/sfx-sword-whoosh-direction.json \
+  --variation-index 0
+```
+
+`clayfarm audio generate` accepts the same reviewed spec and still requires a
+profile that has passed local model verification:
+
+```sh
+clayfarm audio generate sa3-small-cpu \
+  --spec examples/sfx-sword-whoosh-direction.json \
+  --out ./audio/sfx/sword-whoosh
+```
+
+The current single-WAV contract generates one variation per job. Create child
+jobs with distinct seeds (or compile with `--variation-index`) when comparing
+multiple candidates; a request with `variation_count` greater than one still
+fails explicitly until the bundle artifact contract is enabled.
+
+The output keeps `direction-manifest.json` beside the WAV when a direction card
+was used. This records the normalized card, card hash, compiler version, source
+text hash, and compiled constraints. It is provenance, not a human approval or
+neural-model readiness claim.
 
 Model settings such as sampler, dimensions, and batch size remain profile
 locked. Unknown fields are rejected at the API boundary.

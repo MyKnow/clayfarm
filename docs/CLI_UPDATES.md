@@ -6,6 +6,17 @@ ClayFarm Control의 버전은 [`src/clayfarm_control/version.py`](../src/clayfar
 `/health`, CLI `--version`, 작업 release ID는 이 값을 읽으므로 서로 다른 버전을 광고하지
 않는다.
 
+## 0.4.0.dev2 패치 노트
+
+- SFX schema version 2에 검토 가능한 `Sound Direction Card`를 추가했다.
+- `source_text`는 provenance 해시로만 보존하고, Stable Audio SFX에는 결정적으로
+  컴파일된 prompt와 금지 조건만 전달한다.
+- `clayfarm audio direction draft|validate|compile`과 `clayfarm audio generate`를
+  추가했다. `draft` 결과는 항상 `needs_review`이며 자동 승인을 수행하지 않는다.
+- 방향 카드의 hash·compiler version·seed를 `direction-manifest.json`에 기록한다.
+- 이 릴리스는 로컬 계약·컴파일러 변경이며, 중앙 3D 큐·웹 UI·신경망 모델 ready 상태를
+  열지 않는다. 운영 update feed와 signed wheel은 별도 발행 전까지 활성화되지 않는다.
+
 ## 사용자
 
 업데이트 확인은 네트워크를 자동으로 호출하지 않는다.

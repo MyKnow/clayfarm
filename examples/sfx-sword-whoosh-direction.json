@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "event_id": "SwordSwish_A",
+  "source_text": "검이 빠르게 공기를 한 번 가르는 짧고 날카로운 휙",
+  "direction": {
+    "schema_version": 1,
+    "category": "weapon",
+    "action": "whoosh",
+    "materials": [],
+    "textures": ["airy", "clean", "hiss"],
+    "must": ["air_cut", "clean_finish", "descending_sweep", "one_transient", "short_whoosh"],
+    "must_not": ["airflow", "blowing", "breath", "metal_impact", "steam", "sustained_wind", "tonal_drone"],
+    "size": "small",
+    "energy": "strong",
+    "attack": "instant",
+    "tail": "short",
+    "space": "dry",
+    "pitch": "high",
+    "mood": "harsh",
+    "brightness": 0.85,
+    "noise_ratio": 0.95,
+    "sweep": "high_to_mid",
+    "frequency_hz": [10000, 3000],
+    "layer_count": 1,
+    "loopable": false,
+    "reference_tags": ["blade_swish"]
+  },
+  "duration_seconds": 0.18,
+  "variation_count": 1,
+  "seed": 421
+}
