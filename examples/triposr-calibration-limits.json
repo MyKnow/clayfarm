@@ -1,0 +1,8 @@
+{
+  "engine_limits": {
+    "triposr": {
+      "min_free_vram_mb": 3840,
+      "gpu_min_ram_mb": 8192
+    }
+  }
+}

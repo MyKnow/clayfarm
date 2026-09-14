@@ -1,0 +1,31 @@
+name: clayfarm
+services:
+  api:
+    image: ${CLAYFARM_IMAGE:?Set the verified ClayFarm image tag or digest}
+    platform: linux/amd64
+    init: true
+    restart: unless-stopped
+    env_file:
+      - ${CLAYFARM_ENV_FILE:?Set the server-only environment file path}
+    environment:
+      CLAYFARM_ALLOW_REMOTE: "1"
+    ports:
+      - "127.0.0.1:8765:8765"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    mem_limit: 768m
+    cpus: 1.0
+    stop_grace_period: 90s
+    volumes:
+      - state:/var/lib/clayfarm
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=10001,gid=10001
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  state: {}

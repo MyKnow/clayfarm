@@ -1,0 +1,315 @@
+{
+  "date": "2026-09-12",
+  "evidence_source": "Remote task ClayFarm Windows CUDA 검증",
+  "thread_id": "01a09533-8a14-7f02-99d2-9aa10e88c042",
+  "host": "DESKTOP-UB20P0O",
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+    "vram_mib": 6141,
+    "driver": "591.44",
+    "power": "AC"
+  },
+  "production_ready": false,
+  "new_control_cli_on_windows": "not_yet_executed",
+  "triposr": {
+    "source_revision": "107cefdc244c39106fa830359024f6a2f1c78871",
+    "weights_revision": "5b521936b01fbe1890f6f9baed0254ab6351c04a",
+    "weights_sha256": "429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee",
+    "python": "3.11.16",
+    "torch": "2.5.1+cu124",
+    "neural_backend": "CUDA",
+    "mesh_extraction_backend": "CPU",
+    "torchmcubes_revision": "bc36b08c62c5931e1dfc666581b3a8589278647f",
+    "installation_recovery": "Latest torchmcubes build failed without CUDA toolkit; pinned official revision built CPU extraction with DISTUTILS_USE_SDK=1",
+    "settings": {
+      "chunk_size": 4096,
+      "mc_resolution": 256
+    },
+    "online": "passed",
+    "fresh_offline": "passed_with_socket_audit_network_block",
+    "offline_network_attempts": 0,
+    "raw_glb": {
+      "bytes": 1685360,
+      "triangles": 84156,
+      "sha256": "7dc06611219d73a40d8907763e5d0548ffa103b883974ec0ce1b48208c3ea1ae",
+      "online_offline_equal": true
+    },
+    "admission_replay": {
+      "wall_seconds": 21.356,
+      "torch_peak_allocated_bytes": 2494066176,
+      "torch_peak_reserved_bytes": 3200253952,
+      "pdh_process_peak_dedicated_gpu_bytes": 3310145536,
+      "nvidia_smi_whole_gpu_baseline_mib": 1925,
+      "nvidia_smi_free_before_mib": 3999,
+      "nvidia_smi_whole_gpu_peak_mib": 5081,
+      "sampled_process_tree_rss_peak_bytes": 4428337152,
+      "python_os_peak_working_set_bytes": 4469075968
+    },
+    "memory_scope": "One input and fixed settings, sampled metrics and OS peak separately recorded; not a production workload guarantee",
+    "blender_original": "Technical hard_pass but chair lies sideways; visual acceptance failed",
+    "axis_fix": "Final exact upstream viewer transform and integrated executor hooks passed on real Windows Blender; semantic front/back remains caller review",
+    "execution_failure_recovery": "Installation build recovery and fresh offline replays passed; actual bounded GPU OOM/recovery verified separately with SD-Turbo",
+    "production_ready": false,
+    "up_only_diagnostic": {
+      "module_sha256": "ab776e088ec57be5877018e302e64d9faed2751c95af5d71e43f10e93bebd751",
+      "canonical_glb_sha256": "0bcdeccf4f9fcedb5337b1020d12cc4fa01b032f95a588287b82976080773aac",
+      "idempotent": true,
+      "binary_and_existing_nodes_preserved": true,
+      "blender_dimensions_m": [
+        0.567661,
+        0.533608,
+        0.99999994
+      ],
+      "blender_processed_sha256": "775012daf157804bb2994526fc9e82dd64fcf51659d093550c417a0f74913b43",
+      "blender_triangles": 9700,
+      "blender_wall_seconds": 13.074,
+      "visual_upright": true,
+      "semantic_front_aligned": false,
+      "cpu_reprocess_from_same_canonical_raw": {
+        "height_m": 1.2,
+        "target_triangles": 5000,
+        "actual_triangles": 4850,
+        "sha256": "9f0910e8198ce3e630a575266296533f08068402e15c835f5fe6706086a556fb",
+        "wall_seconds": 12.716,
+        "neural_rerun": false
+      }
+    },
+    "final_axis_module_sha256": "5e03b2bebb61ce07914c2ff61ab214e463f212f0e8a2532865ef16683ec446aa",
+    "exact_executor_pipeline": {
+      "executor_sha256": "be731645abf8eca29bb59753803580ec7f988ecfa791aeb95aecd26e8fb01984",
+      "coordinate_module_sha256": "5e03b2bebb61ce07914c2ff61ab214e463f212f0e8a2532865ef16683ec446aa",
+      "status": "passed",
+      "stages": [
+        "fresh_offline_cuda_reconstruct",
+        "process",
+        "six_views",
+        "legacy_raw_parent_compatibility",
+        "up_only_marker_upgrade",
+        "cpu_revision",
+        "revision_front_right"
+      ],
+      "wall_seconds": 45.55,
+      "parameter_device": "cuda:0",
+      "scene_codes_device": "cuda:0",
+      "network_attempts": 0,
+      "pdh_process_peak_dedicated_gpu_bytes": 3310145536,
+      "nvidia_smi_whole_gpu_peak_mib": 5081,
+      "sampled_process_tree_rss_peak_bytes": 4495659008,
+      "up_only_upgrade_dimension_delta_m": 5.96e-08,
+      "dimension_tolerance_m": 1e-06,
+      "semantic_front_aligned": false,
+      "preserve_vertex_color_visual_status": "vertex_values_and_shader_links_preserved; visual_color_match_requires_review"
+    },
+    "raw_color_accessor": {
+      "componentType": 5121,
+      "normalized": true,
+      "type": "VEC4",
+      "count": 42154,
+      "min_rgb": [
+        3,
+        2,
+        2
+      ],
+      "max_rgb": [
+        241,
+        233,
+        228
+      ],
+      "alpha": 255,
+      "import_shader_link": "Color Attribute.Color -> Principled BSDF Base Color, present in Blender 4.5.9"
+    },
+    "color_stages": {
+      "raw_and_canonical": {
+        "non_gray_vertices": 41410,
+        "count": 42154,
+        "mean_rgb": [
+          0.49672,
+          0.44212,
+          0.41026
+        ],
+        "binary_preserved": true
+      },
+      "processed": {
+        "componentType": 5126,
+        "type": "VEC3",
+        "non_gray_vertices": 4732,
+        "mean_rgb": [
+          0.46594,
+          0.40905,
+          0.37686
+        ],
+        "min_rgb": [
+          0.01681,
+          0.01229,
+          0.01229
+        ],
+        "max_rgb": [
+          0.94731,
+          0.9131,
+          0.89627
+        ],
+        "shader_link_preserved": true
+      },
+      "revision": {
+        "non_gray_vertices": 2361,
+        "mean_rgb": [
+          0.45133,
+          0.3937,
+          0.36153
+        ],
+        "shader_link_preserved": true
+      },
+      "conclusion": "No vertex-color deletion found across processing/export/reimport. Lighter rendered appearance is a visual review concern, not a confirmed missing shader binding."
+    },
+    "environment_freeze_sha256_remote": "6c7002e9b199f781e0a024e2cb7fb26eb2cd97f0c490de46f0fb0ce326cafa22"
+  },
+  "sf3d": {
+    "status": "blocked_gated_model_access",
+    "http_status": 401,
+    "access_or_license_accepted": false,
+    "production_ready": false
+  },
+  "other_models": "not_installed_or_executed",
+  "evidence_root_on_windows": "C:/dev/clayfarm-hardware-check-20260912",
+  "sd_turbo_cuda": {
+    "status": "actual_offline_execution_and_bounded_oom_recovery_passed_unsigned",
+    "model_revision": "b261bac6fd2cf515557d5d0707481eafa0485ec2",
+    "production_ready": false,
+    "backend": "cuda",
+    "python": "3.11",
+    "torch": "2.5.1+cu124",
+    "diffusers": "0.31.0",
+    "transformers": "4.46.3",
+    "adapter_sha256": "a37af3c52021f190bb63c61913b1c0c909960c5d0df677524d6073de2e3d2997",
+    "settings": {
+      "height": 512,
+      "width": 512,
+      "steps": 1,
+      "guidance_scale": 0,
+      "seed": 0
+    },
+    "artifact": {
+      "bytes": 295331,
+      "sha256": "239255fafc589e1772fd4f455873df90f5eadb2e51df795b1ccd51932147f6e7",
+      "visual": "non_blank_gray_cube_background_and_shadow"
+    },
+    "network_attempts": 0,
+    "cpu_fallback": false,
+    "runtime_seconds": 32.219,
+    "wall_seconds": 33.554,
+    "torch_peak_allocated_bytes": 3247473152,
+    "torch_peak_reserved_bytes": 3888119808,
+    "pdh_process_peak_dedicated_gpu_bytes": 4004306944,
+    "pdh_process_peak_shared_gpu_bytes": 81788928,
+    "nvidia_smi_whole_gpu_baseline_mib": 1925,
+    "nvidia_smi_whole_gpu_peak_mib": 5427,
+    "sampled_process_tree_rss_peak_bytes": 2361344000,
+    "runtime_source_sha256": {
+      "common.py": "dd93d585c5db8703f88b39355f27b1a45e0a10703a785cfb74d30d2f7747886f",
+      "inventory.py": "2de99d0466109dbe64561df232e38c06b0809ee3e6b595d9c4fb7785e20bd9a2",
+      "registry.py": "2aee72ab1f9f2f0d80a8fa6aea514e0e5dfccfcb9ae45307423397cb700b7f55",
+      "runtime.py": "0f5979645c9226e4e049c8f83733dbffe362eedb8ecd178eaebbed24b9515c8f",
+      "__init__.py": "3fa3d855254bf7fca1f59be6785c04a6343ee163069f872340abe8880dae4893",
+      "adapters/builtin.py": "0023533a51c54285ad92f296dc155b72496bffe50bf4190e386b80f8d156aaff",
+      "adapters/diffusers_image.py": "a37af3c52021f190bb63c61913b1c0c909960c5d0df677524d6073de2e3d2997",
+      "adapters/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "environment_freeze": {
+      "file": "locks/model-diagnostic-windows-py311.freeze.txt",
+      "sha256_lf": "2d6d7305a63b53034320e64d2d23750e47e7adab575e770b6ddacb89ac93db26",
+      "sha256_remote": "2d6d7305a63b53034320e64d2d23750e47e7adab575e770b6ddacb89ac93db26",
+      "note": "Installed environment snapshot, not a wheel-hash locked installer"
+    },
+    "bounded_oom": {
+      "allocator_fraction": 0.05,
+      "set_before_runtime": true,
+      "exit_code": 1,
+      "error_code": "device_memory_pressure",
+      "status": "failed",
+      "artifact_created": false,
+      "wall_seconds": 32.4958154,
+      "runtime_seconds": 20.296,
+      "torch_peak_allocated_bytes": 299363840,
+      "torch_peak_reserved_bytes": 301989888,
+      "pdh_process_peak_dedicated_gpu_bytes": 386682880,
+      "sampled_process_tree_rss_peak_bytes": 820080640,
+      "after_exit_whole_gpu_used_mib": [
+        1609,
+        1609,
+        1609
+      ],
+      "test_python_processes_remaining": 0
+    },
+    "recovery": {
+      "new_process": true,
+      "status": "passed",
+      "exit_code": 0,
+      "runtime_seconds": 11.469,
+      "wall_seconds": 12.676199,
+      "same_png_sha256": true,
+      "artifact_sha256": "239255fafc589e1772fd4f455873df90f5eadb2e51df795b1ccd51932147f6e7",
+      "torch_peak_reserved_bytes": 3890216960,
+      "pdh_process_peak_dedicated_gpu_bytes": 4006404096,
+      "sampled_process_tree_rss_peak_bytes": 2327961600,
+      "runtime_sampled_host_peak_bytes": 2345820160,
+      "socket_attempts": 0
+    },
+    "post_benchmark_runtime_budget_guard_sha256": "a8590aebae1ddb9e920db6f9ccefe58309f9b6eef31f47f48e91968be1962e28",
+    "source_comparison_scope": "Runtime subset matched local source when the successful benchmark receipt was imported; optional CUDA request budget guard was added afterward and is verified separately.",
+    "entry_budget_guard_verification": {
+      "status": "passed_expected_real_oom",
+      "runtime_sha256": "a8590aebae1ddb9e920db6f9ccefe58309f9b6eef31f47f48e91968be1962e28",
+      "device_budget_bytes": 322122547,
+      "external_allocator_budget_used": false,
+      "runtime_error_code": "device_memory_pressure",
+      "exit_code": 1,
+      "runtime_seconds": 6.093,
+      "wall_seconds": 9.6240184,
+      "runtime_sampled_device_bytes": 272629760,
+      "torch_max_reserved_bytes": 314572800,
+      "torch_max_allocated_bytes": 311286784,
+      "sampled_process_tree_gpu_dedicated_peak_bytes": 399265792,
+      "sampled_process_tree_ram_peak_bytes": 911712256,
+      "python_os_peak_working_set_bytes": 974630912,
+      "socket_attempts": 0,
+      "output_png_created": false,
+      "test_python_processes_remaining": 0,
+      "after_exit_used_gpu_mib": [
+        1703,
+        1703,
+        1703
+      ],
+      "same_runtime_normal_execution_rerun": false,
+      "prior_normal_runtime_sha256": "0f5979645c9226e4e049c8f83733dbffe362eedb8ecd178eaebbed24b9515c8f",
+      "remote_evidence_zip_sha256": "19b99160861cfa171eac5d9e12cdf8e2e065a579ecec4e9f1e147732abfd00b5"
+    }
+  },
+  "local_hardware_validation_status": "completed_with_explicit_limitations",
+  "preservation": {
+    "original_15_files_unchanged": true,
+    "game_head_and_dirty_status_unchanged": true,
+    "original_Unity_processes_preserved": 3,
+    "upstream_triposr_and_torchmcubes_git_clean": true
+  },
+  "remote_evidence_archive": {
+    "path": "C:/dev/clayfarm-hardware-check-20260912/hardware-evidence-20260912.zip",
+    "bytes": 16793647,
+    "entries": 417,
+    "sha256": "5daaeb7f2d5d1b7fa87378ad0220e6cf9991f3cd9a59709b9d9e0fc3ffdafd67",
+    "location": "Windows only; this local report contains the received core evidence, not the full remote archive"
+  },
+  "not_tested": [
+    "SF3D gated weights",
+    "SDXL models",
+    "new control CLI/gateway/Auth/heartbeat/claim/Storage on Windows",
+    "Unity import/runtime/physics",
+    "MLX neural model adapters (unimplemented)"
+  ],
+  "sdxl": {
+    "status": "blocked_preflight",
+    "detail": "SDXL_PREFLIGHT.json",
+    "model_installed": false,
+    "model_inference_run": false,
+    "production_ready": false
+  }
+}

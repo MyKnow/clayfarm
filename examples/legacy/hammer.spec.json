@@ -1,0 +1,33 @@
+{
+  "name": "clay_toy_hammer",
+  "description": "클레이풍 장난감 망치. 짧고 굵은 손잡이와 크고 둥근 머리. 이 문장은 검토 맥락이며 3D 변형 명령이 아닙니다.",
+  "height_m": 0.8,
+  "target_triangles": 5000,
+  "axis_scale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "pivot": "bottom_center",
+  "material": {
+    "preset": "terracotta"
+  },
+  "views": [
+    "front",
+    "three_quarter",
+    "right",
+    "back",
+    "top",
+    "bottom"
+  ],
+  "preview_size": 384,
+  "geometry": {
+    "remesh": "none",
+    "smooth_iterations": 1
+  },
+  "lod_ratios": [
+    0.5,
+    0.25
+  ],
+  "collider": "box"
+}

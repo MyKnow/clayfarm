@@ -1,0 +1,89 @@
+{
+  "repository": "stabilityai/stable-diffusion-xl-base-1.0",
+  "revision": "462165984030d82259a11f4367a4eed129e94a7b",
+  "gated": false,
+  "weights": [
+    {
+      "rfilename": "text_encoder/model.fp16.safetensors",
+      "blobId": "e224fcda070dc105fd83c64ed2074f47a1b0ff7b",
+      "size": 246144152,
+      "lfs": {
+        "sha256": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+        "size": 246144152,
+        "pointerSize": 134
+      }
+    },
+    {
+      "rfilename": "text_encoder_2/model.fp16.safetensors",
+      "blobId": "1a41ba6f6d67ebaaea453978332a941d0bc5dae5",
+      "size": 1389382176,
+      "lfs": {
+        "sha256": "ec310df2af79c318e24d20511b601a591ca8cd4f1fce1d8dff822a356bcdb1f4",
+        "size": 1389382176,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "unet/diffusion_pytorch_model.fp16.safetensors",
+      "blobId": "cfd71e1a1bcbfabb2d8256a5d89d8a6fe5608c98",
+      "size": 5135149760,
+      "lfs": {
+        "sha256": "83e012a805b84c7ca28e5646747c90a243c65c8ba4f070e2d7ddc9d74661e139",
+        "size": 5135149760,
+        "pointerSize": 135
+      }
+    },
+    {
+      "rfilename": "vae/diffusion_pytorch_model.fp16.safetensors",
+      "blobId": "d490d01ec5a179303986f73b7ef0675f014cf016",
+      "size": 167335342,
+      "lfs": {
+        "sha256": "bcb60880a46b63dea58e9bc591abe15f8350bde47b405f9c38f4be70c6161e68",
+        "size": 167335342,
+        "pointerSize": 134
+      }
+    }
+  ],
+  "fp16_weight_bytes": 6938011430,
+  "mac_memory": {
+    "total": 25769803776,
+    "available": 6092210176,
+    "percent": 76.4,
+    "used": 11945345024,
+    "free": 134135808,
+    "active": 5991858176,
+    "inactive": 5941395456,
+    "wired": 5953486848
+  },
+  "disk": {
+    "total": 994610155520,
+    "used": 973437206528,
+    "free": 21172948992
+  },
+  "unet_tensor_payload_bytes": 5134927368,
+  "unet_tensor_payload_source": "Windows task validated a 206 range-read safetensors header, 1680 F16 tensors, shapes, contiguous non-overlapping offsets and file length",
+  "mac_mps_budget_bytes_at_preflight": 2870984704,
+  "mac_status": "blocked_before_install_and_inference",
+  "mac_reason": "Non-offloaded fp16 UNet tensor payload alone exceeds current MPS budget",
+  "mac_inference_run": false,
+  "windows": {
+    "status": "blocked_preflight",
+    "free_vram_mib": 4221,
+    "allocator_budget_bytes": 3889168384,
+    "unet_tensor_payload_bytes": 5134927368,
+    "shortfall_bytes": 1245758984,
+    "ram_available_bytes": 9995288576,
+    "host_reserve_bytes": 2147483648,
+    "disk_free_bytes": 382272372736,
+    "header_bytes": 222384,
+    "header_sha256": "df550a86cd422857aa680c67cad624a8fde3c6dd823bf536f6513bc8667a4f55",
+    "header_shape_offset_validation": "passed",
+    "fp16_tensor_count": 1680,
+    "model_installed": false,
+    "model_inference_run": false,
+    "reason": "Model CPU offload transfers the whole UNet to CUDA before its forward pass; the tensor payload alone exceeds the current allocator budget",
+    "remote_evidence_zip_sha256": "26275c15e655d238575b48e1bb4a21c7a9d2592d9860177a8e8d3480cab71501"
+  },
+  "weights_hash_scope": "Expected upstream LFS hashes only; no complete weight tensors downloaded or locally hashed",
+  "production_ready": false
+}

@@ -1,0 +1,14 @@
+**
+!pyproject.toml
+!README.md
+!LICENSE
+!src/
+!src/**
+!locks/
+!locks/server-linux-amd64-py312.lock
+!deploy/
+!deploy/healthcheck.py
+**/__pycache__/
+**/*.pyc
+**/*.egg-info/
+**/*.enrollment.json

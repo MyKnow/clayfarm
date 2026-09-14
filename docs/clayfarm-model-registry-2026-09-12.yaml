@@ -1,0 +1,1571 @@
+schema_version: 0.1-draft
+registry_revision: 2026-09-12-draft1
+language: ko
+status: planning_only_not_deployable
+generated_at: '2026-09-12'
+notice: 모델 선택/구간/파이프라인 설계 산출물. ClayFarm 코드 수정·설치·GPU/MPS/MLX 실행 검증은 수행하지 않음. 근거없는 성능 수치는 null이며 0이 아님.
+normative_requirements:
+- RTX 4050를 포함한 이기종 컴퓨터를 가입·승인·등록 가능한 워커 대상으로 한다.
+- GPU 브랜드/모델명 whitelist로 사용자를 차단하지 않는다. 실행기 호환성 및 안전 실행 예산으로 각 기능을 판정한다.
+- Apple Silicon을 CPU 전용으로 고정하지 않는다. MLX/MPS와 고메모리 모델을 실제 구현·시험 대상으로 포함한다.
+- Windows/macOS CLI만으로 모든 계정·관리·설치·검증·업데이트를 수행할 수 있어야 한다.
+- 구간은 모델 탐색 후보 집합이다. 구간에 속했다는 사실만으로 ready를 부여하지 않는다.
+- 모델 크기/생성 해상도를 올리는 것과 출력 품질 향상을 동일시하지 않는다.
+- VFX/UI/애니메이션 완제품은 모델 출력 외 조립·베이크·런타임 QA를 요구한다.
+- 사용자 승인 없는 유료 API·외부 클라우드 생성으로 fallback하지 않는다.
+hardware_bands:
+- id: CPU
+  description: GPU가 없거나 호환 실행기가 없는 장비
+  purpose: CPU RAM·실측 처리시간에 따라 개별 허용
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: C4
+  description: CUDA 전용 메모리 4GB급
+  purpose: 초경량 2D와 CPU 작업 중심
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: C6
+  description: CUDA 전용 메모리 6GB급
+  purpose: RTX 4050 Laptop 예시; 낮은 메모리 설정 검증
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: C8
+  description: CUDA 전용 메모리 8GB급
+  purpose: RTX 4070 Laptop 예시; 표준 경량 생성
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: C12
+  description: CUDA 전용 메모리 12GB급
+  purpose: 중형 shape/리깅 후보
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: C16
+  description: CUDA 전용 메모리 16GB급
+  purpose: 중대형 2D 및 2.0 texture 후보
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: C24
+  description: CUDA 전용 메모리 24GB급
+  purpose: 고메모리 단일 단계; Lite motion은 경계 시험
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: C32
+  description: CUDA 전용 메모리 32GB 이상
+  purpose: 전체 고메모리 파이프라인 후보
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: A16
+  description: Apple Silicon 통합 메모리 16GB급
+  purpose: CPU/MPS/MLX 프로필별 시험
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: A24
+  description: Apple Silicon 통합 메모리 24GB급
+  purpose: 사용자 M5 Pro; 상위 이미지·SFX GPU 경로 포함
+  assignment: nominal_capacity_seed_only_not_safety_budget
+- id: A32
+  description: Apple Silicon 통합 메모리 32GB 이상
+  purpose: 상위 GPU 모델 후보; CUDA 등급과 동일시 금지
+  assignment: nominal_capacity_seed_only_not_safety_budget
+inventory_required:
+- os
+- architecture
+- gpu_id
+- gpu_name
+- backend_versions
+- device_memory_total_bytes
+- device_memory_available_bytes
+- unified_memory_total_bytes
+- host_ram_available_bytes
+- memory_pressure
+- local_budget_bytes
+- disk_cache_budget_bytes
+- network_state
+- power_thermal_policy
+- driver_runtime_fingerprint
+admission:
+  must_pass:
+  - owner_policy
+  - membership_and_grant
+  - asset_contract
+  - license_and_access
+  - pinned_signed_release
+  - adapter_and_os_support
+  - validated_model_backend_preset
+  - current_device_and_host_headroom
+  - input_envelope
+  - runtime_quality_budget
+  unknown_memory: calibration_only_under_explicit_limits_not_production_dispatch
+  measure:
+  - cold_load_seconds
+  - warm_compute_seconds
+  - full_pipeline_peak_device_bytes
+  - full_pipeline_peak_host_bytes
+  - process_and_driver_overhead
+  - output_quality
+  - transfer_seconds
+  - ooms
+  - interruptions
+  - p95_wall_seconds
+  activation: candidate -> installing -> smoke_pass -> workload_matrix_pass -> node_ready
+  calibration_notice: 안전 여유와 동시성 한도는 현장 검증 전 근거없음/설계값. 외부 H200 수치를 현장 보장으로 복사하지 않음.
+scheduling:
+  objective: meet_required_quality_then_minimize_expected_completion_time
+  time_components:
+  - queue
+  - uncached_download
+  - cold_load
+  - compute
+  - result_upload
+  - expected_retry_cost
+  large_model_reservation: prefer smaller eligible nodes for light tasks when scarce high-memory node has queued
+    exclusive tasks; do not strand work when no such demand exists
+  fallback_order:
+  - same-approved-contract memory optimization
+  - another eligible node same locked profile
+  - explicitly approved alternative model/preset
+  - wait/needs-capacity
+  never_silently_change:
+  - model_revision
+  - style_pack
+  - output_contract
+  - resolution_floor
+  - animation_rig
+  - license_scope
+  - external_api_usage
+  oom_scope: node+model+backend+profile+input-envelope, not entire node
+  retry: transient pressure can retry later; deterministic over-budget configuration is quarantined until configuration/environment
+    changes
+  multi_gpu: independent stage/candidate tasks; no automatic cross-node VRAM aggregation
+  offline: use signed cached policy and existing allowed leases; no unauthorized cloud fallback; durable outbox
+    and idempotent commit/fencing
+installation_policy:
+  preinstall: shared runtime + one useful approved recipe per selected role; not every candidate model
+  demand_load: true
+  pinned_revisions_required: true
+  separate_runtime_environments: true
+  license_approval_required: true
+  resumable_downloads: true
+  checksum_and_signed_metadata_required: true
+  cache_eviction: LRU within local disk budget, protect active jobs and designated last-good profile
+  promotion: one compatible canary -> benchmark -> staged rollout; retain last-good environment
+  lower_memory_modes: only explicit per-backend recipes; no arbitrary 4bit conversion or generic offload of unsupported
+    kernels
+artifact_contracts:
+  3d_model:
+  - mesh geometry
+  - UV/material policy
+  - GLB/FBX
+  - scale/pivot/LOD/collider QA
+  texture:
+  - albedo and declared PBR maps
+  - tile seams/UV matching
+  - normal convention
+  - bake settings
+  vfx:
+  - time-consistent flipbook or particle preset
+  - alpha/atlas
+  - material and runtime prefab
+  - target-engine build/performance test
+  ui:
+  - raster/vector art
+  - deterministic text/layout
+  - 9-slice/atlas where needed
+  - interactive template import test
+  sfx:
+  - WAV master
+  - duration/channels/sample-rate
+  - clipping/silence/loudness
+  - semantic and loop QA
+  rigging:
+  - skeleton hierarchy
+  - skin weights
+  - rest pose
+  - deformation test
+  animation:
+  - rig-compatible clips
+  - root motion policy
+  - loop/contact checks
+  - FBX/GLB animation export
+  - engine replay test
+models:
+  sd-turbo:
+    name: SD-Turbo
+    repository: stabilityai/sd-turbo
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - sd-turbo
+    license_note: Stability 원문·가중치·상업 사용 조건 검토 필요
+    scope:
+    - image
+    deployment_approved: false
+  sdxl:
+    name: SDXL Base 1.0
+    repository: stabilityai/stable-diffusion-xl-base-1.0
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - sdxl
+    license_note: CreativeML Open RAIL++-M; 사용 제한 검토
+    scope:
+    - image
+    deployment_approved: false
+  flux2-klein-4b:
+    name: FLUX.2 klein 4B
+    repository: black-forest-labs/FLUX.2-klein-4B
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - flux2-klein
+    - mflux
+    license_note: 본체 Apache-2.0; encoder/변환본/의존성 별도 검토
+    scope:
+    - image
+    deployment_approved: false
+  triposr:
+    name: TripoSR
+    repository: stabilityai/TripoSR
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - triposr
+    license_note: MIT 표기; 체크포인트와 의존성의 정확한 조건 고정
+    scope:
+    - shape
+    deployment_approved: false
+  sf3d:
+    name: Stable Fast 3D
+    repository: stabilityai/stable-fast-3d
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - sf3d
+    license_note: Stability 가중치 조건과 gated 접근 승인 확인
+    scope:
+    - shape
+    - texture
+    deployment_approved: false
+  hunyuan2-mini:
+    name: Hunyuan3D 2mini Turbo
+    repository: tencent/Hunyuan3D-2mini
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - hunyuan2
+    license_note: Tencent 모델별 라이선스 검토; 묵시적 승인 금지
+    scope:
+    - shape
+    deployment_approved: false
+  hunyuan2-shape:
+    name: Hunyuan3D 2.0 Shape
+    repository: tencent/Hunyuan3D-2
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - hunyuan2
+    license_note: Tencent 모델별 라이선스 검토
+    scope:
+    - shape
+    deployment_approved: false
+  hunyuan2-paint:
+    name: Hunyuan3D 2.0 Paint
+    repository: tencent/Hunyuan3D-2
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - hunyuan2
+    license_note: Tencent 모델별 라이선스 검토
+    scope:
+    - texture
+    deployment_approved: false
+  hunyuan21-shape:
+    name: Hunyuan3D 2.1 Shape
+    repository: tencent/Hunyuan3D-2.1
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - hunyuan21
+    license_note: Tencent 모델별 라이선스 검토
+    scope:
+    - shape
+    deployment_approved: false
+  hunyuan21-paint:
+    name: Hunyuan3D 2.1 Paint
+    repository: tencent/Hunyuan3D-2.1
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - hunyuan21
+    license_note: Tencent 모델별 라이선스 검토
+    scope:
+    - texture
+    deployment_approved: false
+  trellis2:
+    name: TRELLIS.2 4B
+    repository: microsoft/TRELLIS.2-4B
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - trellis2
+    license_note: 모델·코드 MIT; 렌더 의존성별 조건 확인
+    scope:
+    - shape
+    - texture
+    deployment_approved: false
+  sa3-small-sfx:
+    name: Stable Audio 3 Small-SFX
+    repository: stabilityai/stable-audio-3-small-sfx
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - sa3-small
+    - sa3-runtime
+    license_note: Stable Audio Community + Gemma 구성요소 조건; 접근 승인 필요
+    scope:
+    - sfx
+    deployment_approved: false
+  sa3-medium:
+    name: Stable Audio 3 Medium
+    repository: stabilityai/stable-audio-3-medium
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - sa3-medium
+    - sa3-runtime
+    license_note: 가중치·구성요소 조건, gated 접근 확인
+    scope:
+    - sfx
+    deployment_approved: false
+  unirig:
+    name: UniRig
+    repository: VAST-AI/UniRig
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - unirig
+    - unirig-weights
+    license_note: 실제 배포 checkpoint와 코드·의존성 조건 검토
+    scope:
+    - rigging
+    deployment_approved: false
+  skintokens:
+    name: SkinTokens / TokenRig
+    repository: https://github.com/VAST-AI-Research/SkinTokens
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - skintokens
+    license_note: 코드 MIT 표기; 실제 모델 가중치와 모든 구성요소 조건 검토
+    scope:
+    - rigging
+    deployment_approved: false
+  hymotion-lite:
+    name: HY-Motion 1.0 Lite
+    repository: tencent/HY-Motion-1.0
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - hymotion
+    license_note: Tencent custom 조건 및 skeleton/후처리 의존성 검토
+    scope:
+    - motion
+    deployment_approved: false
+  hymotion:
+    name: HY-Motion 1.0
+    repository: tencent/HY-Motion-1.0
+    model_revision: null
+    weights_sha256: null
+    source_ids:
+    - hymotion
+    license_note: Tencent custom 조건 및 skeleton/후처리 의존성 검토
+    scope:
+    - motion
+    deployment_approved: false
+profiles:
+- id: procedural-static-mesh
+  model_id: null
+  engine_kind: procedural_or_processing
+  backend: cpu
+  candidate_hardware_bands: &id001
+  - CPU
+  - C4
+  - C6
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  - A16
+  - A24
+  - A32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - macos
+  - linux
+  lane: candidate
+  settings:
+    engine: blender-parametric
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 제한된 파라메트릭 명세에서 정적 메시 생성. 임의 3D AI 생성의 대체물로 표시하지 않음.
+- id: procedural-material
+  model_id: null
+  engine_kind: procedural_or_processing
+  backend: cpu
+  candidate_hardware_bands: *id001
+  asset_kinds:
+  - texture
+  os_candidates:
+  - windows
+  - macos
+  - linux
+  lane: candidate
+  settings:
+    engine: blender-material-bake
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: noise/gradient/고정 팔레트 재질과 bake. PBR 정확성은 승인된 명세 내에서 검증.
+- id: procedural-vfx
+  model_id: null
+  engine_kind: procedural_or_processing
+  backend: cpu
+  candidate_hardware_bands: *id001
+  asset_kinds:
+  - vfx
+  os_candidates:
+  - windows
+  - macos
+  - linux
+  lane: candidate
+  settings:
+    engine: blender-simulation-and-flipbook
+    runtime_target: unity-particles
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 승인 템플릿+시간축 시뮬레이션/베이크. 독립 이미지 여러 장은 시간 일관성의 증거가 아님.
+- id: deterministic-ui
+  model_id: null
+  engine_kind: procedural_or_processing
+  backend: cpu
+  candidate_hardware_bands: *id001
+  asset_kinds:
+  - ui
+  os_candidates:
+  - windows
+  - macos
+  - linux
+  lane: candidate
+  settings:
+    engine: svg-and-sprite-compiler
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 레이아웃·문자·9-slice·상호작용은 결정적 조립. 이미지 생성 성공을 동작 UI 완성으로 취급하지 않음.
+- id: procedural-sfx
+  model_id: null
+  engine_kind: procedural_or_processing
+  backend: cpu
+  candidate_hardware_bands: *id001
+  asset_kinds:
+  - sfx
+  os_candidates:
+  - windows
+  - macos
+  - linux
+  lane: candidate
+  settings:
+    engine: dsp-ffmpeg
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: beep/impact/whoosh 등 허용 템플릿 합성 및 normalize.
+- id: retarget-and-bake
+  model_id: null
+  engine_kind: procedural_or_processing
+  backend: cpu
+  candidate_hardware_bands: *id001
+  asset_kinds:
+  - animation
+  os_candidates:
+  - windows
+  - macos
+  - linux
+  lane: candidate
+  settings:
+    engine: blender-rig-retarget-bake
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 소유/승인된 rig와 motion 또는 키프레임 명세가 필요. 새 text-to-motion 생성과 구분.
+- id: sd-turbo-cuda
+  model_id: sd-turbo
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands: &id003
+  - C4
+  - C6
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    dtype: fp16
+    batch_size: 1
+    width: 512
+    height: 512
+    steps: 1
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 2D 소스 전용. 해상도·step은 upstream 예시를 출발점으로 한 후보 설정; 현장 메모리 미측정.
+- id: sd-turbo-mps
+  model_id: sd-turbo
+  engine_kind: learned_model
+  backend: mps
+  candidate_hardware_bands: &id002
+  - A16
+  - A24
+  - A32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    dtype: fp16
+    batch_size: 1
+    width: 512
+    height: 512
+    steps: 1
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: sdxl-lowmem-cuda
+  model_id: sdxl
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C6
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    dtype: fp16
+    batch_size: 1
+    offload: supported-model-cpu-offload
+    vae_tiling: true
+    width: 768
+    height: 768
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 6GB급 시험 후보. 모델 본체 외 encoder/VAE/RAM 포함 전체 파이프라인 측정 필요.
+- id: sdxl-cuda
+  model_id: sdxl
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    dtype: fp16
+    batch_size: 1
+    width: 1024
+    height: 1024
+    refiner: false
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: sdxl-mps
+  model_id: sdxl
+  engine_kind: learned_model
+  backend: mps
+  candidate_hardware_bands: *id002
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    dtype: fp16
+    batch_size: 1
+    width: 1024
+    height: 1024
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: flux2-q4-cuda
+  model_id: flux2-klein-4b
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    quantization: 4bit-verified-backend-required
+    batch_size: 1
+    width: 1024
+    height: 1024
+    offload: profile-specific
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 4bit 가중치 크기를 peak VRAM으로 사용 금지. 실제 지원 quantizer/encoder/커널 고정 전에는 활성화 금지.
+- id: flux2-bf16-cuda
+  model_id: flux2-klein-4b
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    dtype: bf16
+    batch_size: 1
+    width: 1024
+    height: 1024
+  upstream_memory_evidence:
+    source_id: flux2-klein
+    value_gb: 13
+    scope: upstream approximate VRAM, full settings need matching
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: flux2-q4-mlx
+  model_id: flux2-klein-4b
+  engine_kind: learned_model
+  backend: mlx
+  candidate_hardware_bands:
+  - A24
+  - A32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    quantization: 4bit
+    batch_size: 1
+    width: 1024
+    height: 1024
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: MFLUX 어댑터. CUDA VRAM 수치를 통합 메모리에 적용하지 않음.
+- id: flux2-q8-mlx
+  model_id: flux2-klein-4b
+  engine_kind: learned_model
+  backend: mlx
+  candidate_hardware_bands:
+  - A32
+  asset_kinds:
+  - texture
+  - ui
+  - vfx
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    quantization: 8bit
+    batch_size: 1
+    width: 1024
+    height: 1024
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: A24도 실측 통과 시 별도 프로필 승격 가능. 밴드는 탐색 출발점일 뿐 고정 상한 아님.
+- id: triposr-lowmem
+  model_id: triposr
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C6
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    batch_size: 1
+    chunking: adapter-validated
+    bake_texture: separate-stage
+  upstream_memory_evidence:
+    value_gb: 6
+    scope: upstream default single image; boundary card not guaranteed
+    source_id: triposr
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 4050 6GB에서 운영 활성화 전 필수 경계 시험. 낮은 octree/mesh 설정은 별도 품질 승인.
+- id: triposr-cuda
+  model_id: triposr
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    batch_size: 1
+  upstream_memory_evidence:
+    value_gb: 6
+    scope: upstream default single image; boundary card not guaranteed
+    source_id: triposr
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: sf3d-lowmem
+  model_id: sf3d
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C6
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    batch_size: 1
+    texture_resolution: approved-lowmem-preset
+  upstream_memory_evidence:
+    value_gb: 6
+    scope: upstream default single image; boundary card not guaranteed
+    source_id: sf3d
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: sf3d-cuda
+  model_id: sf3d
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    batch_size: 1
+  upstream_memory_evidence:
+    value_gb: 6
+    scope: upstream default single image; boundary card not guaranteed
+    source_id: sf3d
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: sf3d-mps-a24
+  model_id: sf3d
+  engine_kind: learned_model
+  backend: mps
+  candidate_hardware_bands:
+  - A24
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    batch_size: 1
+    fallback: explicit-hybrid-if-approved
+  upstream_memory_evidence:
+    source_id: sf3d
+    scope: upstream recommends CPU below 32GB unified
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 필수 실험 대상으로 보존하되 성공 전 등록 불가. CPU fallback을 GPU 추론 성공으로 숨기지 않음.
+- id: sf3d-mps-a32
+  model_id: sf3d
+  engine_kind: learned_model
+  backend: mps
+  candidate_hardware_bands:
+  - A32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    batch_size: 1
+    fallback: explicit-hybrid-if-approved
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: upstream 실험 지원. 실제 full-pipeline 메모리와 품질 검증.
+- id: hunyuan2-mini-lowmem
+  model_id: hunyuan2-mini
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C6
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    subfolder: hunyuan3d-dit-v2-mini-turbo
+    batch_size: 1
+    shape_only: true
+    low_vram: true
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: Mini 전용 6GB 안전 실행 증거는 없음. 프로필을 별도 시험하며 texture를 동시에 상주시켜서는 안 됨.
+- id: hunyuan2-shape
+  model_id: hunyuan2-shape
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    batch_size: 1
+    shape_only: true
+  upstream_memory_evidence:
+    source_id: hunyuan2
+    value_gb: 6
+    scope: 2.0 shape stage
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: hunyuan2-paint
+  model_id: hunyuan2-paint
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - texture
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    batch_size: 1
+  upstream_memory_evidence:
+    source_id: hunyuan2
+    value_gb: 16
+    scope: upstream shape+texture total, NOT isolated paint minimum
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: hunyuan21-shape
+  model_id: hunyuan21-shape
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    batch_size: 1
+    shape_only: true
+  upstream_memory_evidence:
+    source_id: hunyuan21
+    value_gb: 10
+    scope: shape stage
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: hunyuan21-paint
+  model_id: hunyuan21-paint
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C24
+  - C32
+  asset_kinds:
+  - texture
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    batch_size: 1
+  upstream_memory_evidence:
+    source_id: hunyuan21
+    value_gb: 21
+    scope: texture stage, NOT full pipeline
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: hunyuan2-mini-mps-port
+  model_id: hunyuan2-mini
+  engine_kind: learned_model
+  backend: mps
+  candidate_hardware_bands:
+  - A24
+  - A32
+  asset_kinds:
+  - 3d_model
+  os_candidates:
+  - macos
+  lane: research_port
+  settings:
+    shape_only: true
+    batch_size: 1
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 모델별 MPS 연산/커널 경로 개발·검증 대상. upstream의 macOS 문구만으로 texture까지 지원한다고 주장하지 않음.
+- id: trellis2-linux
+  model_id: trellis2
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C24
+  - C32
+  asset_kinds:
+  - 3d_model
+  - texture
+  os_candidates:
+  - linux
+  lane: experimental
+  settings:
+    batch_size: 1
+    resolution: 512
+  upstream_memory_evidence:
+    source_id: trellis2
+    value_gb: 24
+    scope: upstream NVIDIA minimum; Linux tested
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: Windows CLI에서 제어 가능하다는 사실은 Windows native 실행 검증이 아님. WSL2는 별도 승인 프로필.
+- id: sa3-small-cpu
+  model_id: sa3-small-sfx
+  engine_kind: learned_model
+  backend: cpu
+  candidate_hardware_bands: *id001
+  asset_kinds:
+  - sfx
+  os_candidates:
+  - windows
+  - macos
+  - linux
+  lane: candidate
+  settings:
+    runtime: tflite
+    duration_seconds: 5
+    batch_size: 1
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: Windows/macOS CPU 경로를 먼저 검증. RAM 및 텍스트 encoder 비용 포함.
+- id: sa3-small-cuda
+  model_id: sa3-small-sfx
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands: *id003
+  asset_kinds:
+  - sfx
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    duration_seconds: 5
+    batch_size: 1
+  upstream_memory_evidence:
+    source_id: sa3-runtime
+    value_gb: 1.69
+    scope: H200 peak allocated, small 5s; not target-node full-process peak
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: sa3-small-mlx
+  model_id: sa3-small-sfx
+  engine_kind: learned_model
+  backend: mlx
+  candidate_hardware_bands: *id002
+  asset_kinds:
+  - sfx
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    duration_seconds: 5
+    batch_size: 1
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 공식 MLX 경로 활용; M5 Pro 실측은 아직 없음.
+- id: sa3-medium-cuda
+  model_id: sa3-medium
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C8
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - sfx
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    duration_seconds: 5
+    batch_size: 1
+    attention: verified-flash-attention
+  upstream_memory_evidence:
+    source_id: sa3-runtime
+    value_gb: 5.07
+    scope: H200 peak allocated, medium 5s; not target-node full-process peak
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: C6은 경계 실험 별도. Windows native 의존성 설치를 검증해야 함.
+- id: sa3-medium-mlx
+  model_id: sa3-medium
+  engine_kind: learned_model
+  backend: mlx
+  candidate_hardware_bands:
+  - A24
+  - A32
+  asset_kinds:
+  - sfx
+  os_candidates:
+  - macos
+  lane: experimental
+  settings:
+    duration_seconds: 5
+    batch_size: 1
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 공식 MLX 실행기에서 해당 변형·설정 확인 후 활성화. GPU 경로와 CPU fallback 분리.
+- id: unirig-cuda
+  model_id: unirig
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - rigging
+  os_candidates:
+  - windows
+  - linux
+  lane: candidate
+  settings:
+    batch_size: 1
+  upstream_memory_evidence:
+    source_id: unirig
+    value_gb: 8
+    scope: README at least 8GB; HF card >8GB
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 리깅은 motion 생성이 아님. 정적 mesh 처리와 별도 데이터 계약.
+- id: unirig-c8-boundary
+  model_id: unirig
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C8
+  asset_kinds:
+  - rigging
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    batch_size: 1
+  upstream_memory_evidence:
+    source_id: unirig
+    value_gb: 8
+    scope: boundary only
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: ''
+- id: skintokens-profile-test
+  model_id: skintokens
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C12
+  - C16
+  - C24
+  - C32
+  asset_kinds:
+  - rigging
+  os_candidates:
+  - windows
+  - linux
+  lane: research_port
+  settings:
+    batch_size: 1
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: 최소 메모리 근거없음. 여기 밴드는 시험 순서 제안이며 설치 가능 보장이 아님.
+- id: hymotion-lite-cuda
+  model_id: hymotion-lite
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C24
+  - C32
+  asset_kinds:
+  - animation
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    num_seeds: 1
+    duration_seconds: 4
+    max_prompt_words: 29
+    prompt_engineering: false
+    model_variant: HY-Motion-1.0-Lite
+  upstream_memory_evidence:
+    source_id: hymotion
+    value_gb: 24
+    scope: upstream minimum; separate prompt-engineering model excluded
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: C24 경계 시험. 출력 후 retarget/root motion/contact/loop 보정 및 QA 필요.
+- id: hymotion-cuda
+  model_id: hymotion
+  engine_kind: learned_model
+  backend: cuda
+  candidate_hardware_bands:
+  - C32
+  asset_kinds:
+  - animation
+  os_candidates:
+  - windows
+  - linux
+  lane: experimental
+  settings:
+    num_seeds: 1
+    duration_seconds: 4
+    max_prompt_words: 29
+    prompt_engineering: false
+    model_variant: HY-Motion-1.0
+  upstream_memory_evidence:
+    source_id: hymotion
+    value_gb: 26
+    scope: upstream minimum; separate prompt-engineering model excluded
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: humanoid만; seamless loop/in-place 기본 미지원.
+- id: hymotion-lite-split-rnd
+  model_id: hymotion-lite
+  engine_kind: learned_model
+  backend: mps
+  candidate_hardware_bands:
+  - A24
+  - A32
+  asset_kinds:
+  - animation
+  os_candidates:
+  - macos
+  lane: research_port
+  settings:
+    split_text_encoder: true
+    cache_embeddings: true
+    batch_size: 1
+    model_variant: HY-Motion-1.0-Lite
+  upstream_memory_evidence: null
+  measured_peak_device_bytes: null
+  measured_peak_host_bytes: null
+  measured_p95_seconds: null
+  executor_revision: null
+  environment_lock_sha256: null
+  adapter_status: not_implemented_or_verified_by_this_artifact
+  node_ready: false
+  notes: MPS 저메모리 분할 이식 R&D. 24GB unified에서 전체 실행 보장 없음. encoder weights/tokenizer/embedding schema를 정확히 고정해야 함.
+sources:
+  nvidia-laptop:
+    url: https://www.nvidia.com/en-us/geforce/laptops/compare/
+    note: RTX 4050 Laptop 6GB; RTX 4070 Laptop 8GB. 제품명은 매칭 조건이 아닌 설명용.
+    checked_at: '2026-09-12'
+  sd-turbo:
+    url: https://huggingface.co/stabilityai/sd-turbo
+    note: 512x512 선호, 1~4 step 계열. 상업 사용은 별도 원문 조건 검토.
+    checked_at: '2026-09-12'
+  sdxl:
+    url: https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
+    note: Base 단독 실행 가능. CreativeML Open RAIL++-M.
+    checked_at: '2026-09-12'
+  flux2-klein:
+    url: https://huggingface.co/black-forest-labs/FLUX.2-klein-4B
+    note: 4B Apache-2.0; 공식 소개 약 13GB VRAM. 저메모리 양자화 프로필은 별도 검증.
+    checked_at: '2026-09-12'
+  mflux:
+    url: https://github.com/mflux-community/mflux
+    note: MLX 이미지 모델 구현, FLUX.2 및 양자화 지원. ClayFarm 연동 검증과 별개.
+    checked_at: '2026-09-12'
+  diffusers-memory:
+    url: https://huggingface.co/docs/diffusers/en/optimization/memory
+    note: 지원 파이프라인의 offload/tiling 등. 모델마다 지원 여부·속도 차이 검증.
+    checked_at: '2026-09-12'
+  diffusers-mps:
+    url: https://huggingface.co/docs/diffusers/en/optimization/mps
+    note: MPS 실행 및 메모리 관련 지침. 모든 모델의 호환 보장은 아님.
+    checked_at: '2026-09-12'
+  triposr:
+    url: https://github.com/VAST-AI-Research/TripoSR
+    note: 기본 단일 이미지 실행 약 6GB VRAM. 6GB 카드의 안전 실행 보장이 아님.
+    checked_at: '2026-09-12'
+  sf3d:
+    url: https://github.com/Stability-AI/stable-fast-3d
+    note: 기본 CUDA 약 6GB. MPS 실험 지원, 통합 메모리 32GB 미만에서는 CPU 권고.
+    checked_at: '2026-09-12'
+  hunyuan2:
+    url: https://github.com/Tencent-Hunyuan/Hunyuan3D-2
+    note: 'Mini/Turbo 가중치 공개; 2.0 설명: shape 6GB, shape+texture 16GB. Mini 각 설정의 실측은 별도.'
+    checked_at: '2026-09-12'
+  hunyuan21:
+    url: https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1
+    note: shape 10GB, texture 21GB, full 29GB. 단계별 수치와 전체 수치를 혼동하지 않음.
+    checked_at: '2026-09-12'
+  trellis2:
+    url: https://github.com/microsoft/TRELLIS.2
+    note: 최소 NVIDIA 24GB, Linux에서 시험. 모델·코드 MIT, 일부 의존성 별도 조건.
+    checked_at: '2026-09-12'
+  sa3-small:
+    url: https://huggingface.co/stabilityai/stable-audio-3-small-sfx
+    note: SFX 특화. 접근 승인, Stable Audio Community 및 Gemma 구성요소 조건 검토.
+    checked_at: '2026-09-12'
+  sa3-medium:
+    url: https://huggingface.co/stabilityai/stable-audio-3-medium
+    note: 상위 오디오 생성·편집 후보. 정확한 가중치 및 구성요소 조건을 함께 검토.
+    checked_at: '2026-09-12'
+  sa3-runtime:
+    url: https://github.com/Stability-AI/stable-audio-3
+    note: 'CPU/TFLite, CUDA 및 MLX 경로. H200 공개 peak allocated: Small 5s 1.69GB; Medium 5s 5.07GB. 해당 노드/전체 프로세스 예산으로
+      그대로 사용 금지.'
+    checked_at: '2026-09-12'
+  unirig:
+    url: https://github.com/VAST-AI-Research/UniRig
+    note: Skeleton+skinning. README CUDA >=8GB; 8GB 경계 시험, 12GB급부터 우선 도입 제안.
+    checked_at: '2026-09-12'
+  unirig-weights:
+    url: https://huggingface.co/VAST-AI/UniRig
+    note: 모델 카드에는 >8GB 표현, 공개 체크포인트 상태는 실제 revision에서 재확인.
+    checked_at: '2026-09-12'
+  skintokens:
+    url: https://github.com/VAST-AI-Research/SkinTokens
+    note: 'TokenRig: skeleton+skinning 후속 후보. CUDA/flash-attn 설치 경로; 최소 VRAM 미확인.'
+    checked_at: '2026-09-12'
+  hymotion:
+    url: https://github.com/Tencent-Hunyuan/HY-Motion-1.0
+    note: 공식 표 Lite 최소24GB/Standard26GB. humanoid 대상; seamless loop/in-place 기본 미지원. 저메모리 분할 이식은 R&D.
+    checked_at: '2026-09-12'
+  vfxgraph:
+    url: https://docs.unity3d.com/Packages/com.unity.visualeffectgraph@17.0/manual/System-Requirements.html
+    note: Compute/SSBO 등 실행 조건. 생성용 GPU 사양과 게임 런타임 플랫폼 지원 분리.
+    checked_at: '2026-09-12'
+verification:
+  yaml_parse: true
+  referential_integrity: true
+  gpu_or_mps_or_mlx_tested: false
+  clayfarm_runtime_modified: false
+  published_to_registry: false
+  validation_scope: Syntax, unique profile IDs, model/source/band references; not a full schema or runtime compatibility
+    test.
+release_gate_required:
+- all_model_and_component_revisions_resolved
+- all_downloaded_file_digests_resolved
+- all_dependency_licenses_reviewed
+- signed_release_approved
+- adapter_present_and_tested
+- target_os_backend_input_matrix_benchmarked

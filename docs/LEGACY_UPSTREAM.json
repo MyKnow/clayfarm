@@ -1,0 +1,154 @@
+{
+  "version": "0.2.2",
+  "source_thread": "01a08919-8190-7f72-b103-32928ecd9f0e",
+  "imported_on": "2026-09-11",
+  "files": [
+    {
+      "path": "LICENSE",
+      "source_sha256": "0d9c6ad8aa2a4d325f750a2982efa9ef73cacca2770871c5e3036f6cdf236439"
+    },
+    {
+      "path": "pyproject.toml",
+      "source_sha256": "f4e8284cf96305cbf31fee878263f71a30056cf39aa066882873b0d2392b0168"
+    },
+    {
+      "path": "install.ps1",
+      "source_sha256": "bdaa7c0afcea0dab2069d566c5a8a3d7d2519f26b4addcb3e675f87eb62fb9ce"
+    },
+    {
+      "path": "install.sh",
+      "source_sha256": "8f2674a5778143d0fc48964759e806bd635e7fe4b41ae8afcf433344c3bdf503"
+    },
+    {
+      "path": "scripts/build_release.py",
+      "source_sha256": "4559bdb8c37b7f276ca29d05017ba690b53fd20c4595fd0e1ad5b40dc27b3425"
+    },
+    {
+      "path": "examples/hammer.spec.json",
+      "source_sha256": "85df62b15b849aea5e94dd207652a7c9e0de61a4fe9b0ff6cca1da3468ac0693"
+    },
+    {
+      "path": "examples/revision.patch.json",
+      "source_sha256": "f31f27b5a386e059171bcfbcafdcf8b54a071019561bc4b101292d9296974523"
+    },
+    {
+      "path": "src/clayfarm/__init__.py",
+      "source_sha256": "cc6b08ad7b7287d88147ad65285c2993d2de698d32781f1295a5360a6fafbb8a"
+    },
+    {
+      "path": "src/clayfarm/__main__.py",
+      "source_sha256": "79ee6f134c5c5193377cf9b189cbdcc3e2095e49ba9cec310114441c15a917c4"
+    },
+    {
+      "path": "src/clayfarm/blender_script.py",
+      "source_sha256": "7ebb1addf4ead365943efb7b39b8fbdd1f2a29777c97bf40cf02b2fbcc082870"
+    },
+    {
+      "path": "src/clayfarm/cli.py",
+      "source_sha256": "67a3292dd7d3c578ff88af591be561be6deee8b170a0f7169090ecbb63c1ae0e"
+    },
+    {
+      "path": "src/clayfarm/executors.py",
+      "source_sha256": "b4dc36aea3b60165a35247db1130f3e142436b66d49da6021234901cef4e1834"
+    },
+    {
+      "path": "src/clayfarm/journal.py",
+      "source_sha256": "dd27924db27092ccc306b9a5422b9e4f6ce1b304fcc88badea8d1b38e807dc5e"
+    },
+    {
+      "path": "src/clayfarm/local.py",
+      "source_sha256": "b8ab73f2a6da0516eaa94b2fcb8d0c8a9553c030f5bdb3e4eecec5604bc9cf39"
+    },
+    {
+      "path": "src/clayfarm/png.py",
+      "source_sha256": "79823f307958b46c637a67ac86a3892b9eda08d085ba403b518a011e0674000f"
+    },
+    {
+      "path": "src/clayfarm/remote.py",
+      "source_sha256": "a0595bfc2a8cd61a4864ecbc9f08a557bb59874412dc3cf135830956b1fdfbf8"
+    },
+    {
+      "path": "src/clayfarm/resources.py",
+      "source_sha256": "cb679076bff03ba35a62da5362627e63a5293b9f9a48d92e23cbbad2122369fe"
+    },
+    {
+      "path": "src/clayfarm/setup.py",
+      "source_sha256": "02aecfb06dde7d56e42fd3c787d1c23b6eb2d67dc4953aa26d09e6626c997de8"
+    },
+    {
+      "path": "src/clayfarm/spec.py",
+      "source_sha256": "28173a6c9feb3c9c864b1930ac57fa4c545e1f3c2496ff4032dd84fb50706c7d"
+    },
+    {
+      "path": "src/clayfarm/util.py",
+      "source_sha256": "5351aa7ebdc2e30a322e2b563336fd56b9bd1038982e94b7c8ba0a6e286371db"
+    },
+    {
+      "path": "src/clayfarm/worker.py",
+      "source_sha256": "9ba7e3af712aaa017c30ebb67b464cfce30b78e0443aa431372e31f7ab7911b6"
+    },
+    {
+      "path": "tests/test_blender.py",
+      "source_sha256": "c0eceb0969ceff89ebfa594d92b20ba32f814424dc339c8b7c75436ec1b25c23"
+    },
+    {
+      "path": "tests/test_core.py",
+      "source_sha256": "5827555663e133249f775dcc18fc1f0dc11604eeeee1da893c2561d60571f847"
+    },
+    {
+      "path": "tests/test_journal_paths.py",
+      "source_sha256": "350eb7a2c9385ac6ec707bb3be787caa1a73b36e26b5d919297b6e1f2eabb271"
+    },
+    {
+      "path": "tests/sql/00_fixture.sql",
+      "source_sha256": "557f111dec450493e4718791ac891795390faa3b479b44853c8a989ffc220cf7"
+    },
+    {
+      "path": "tests/sql/01_smoke.sql",
+      "source_sha256": "d31e258f041b4864fafd38c1613915e631fdaf5c3413434d144f74389e188d77"
+    },
+    {
+      "path": "sql/bootstrap.sql",
+      "source_sha256": "02efed138d74aa91ab4518f37395dfc7ff22cad53cfa8679b6ed0b9f945e5a6e"
+    },
+    {
+      "path": "sql/upgrade_v0_2_1.sql",
+      "source_sha256": "86e7ba042e11fa0f1d2cc6fd76a18d363b2528395766370dff4a722613c476f6"
+    },
+    {
+      "path": "docs/SPEC.md",
+      "destination": "docs/clayfarm/reference/SPEC.md",
+      "source_sha256": "54dacaadc4b246d623e459f0aa7a61f4256dd3733e80721f8509156492e203b4"
+    },
+    {
+      "path": "docs/BLENDER_V02.md",
+      "destination": "docs/clayfarm/reference/BLENDER_V02.md",
+      "source_sha256": "b368e92a9fca72b8e8e21a2143d96828cb6fb793a826aa4b2d625f61063bfb5a"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "destination": "docs/clayfarm/reference/ARCHITECTURE.md",
+      "source_sha256": "74a8bf3c754236141dc8b0ff31d77b2a6f6284f35c31a64b14ec08ae0a48d2bb"
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "destination": "docs/clayfarm/reference/SECURITY.md",
+      "source_sha256": "3b9d4657f86e31bf921c4891fa2ea8ef5911e3eb900b45f9429471c50d0872c4"
+    },
+    {
+      "path": "docs/INSTALL.md",
+      "destination": "docs/clayfarm/reference/INSTALL.md",
+      "source_sha256": "341598053257234a7aad068997608eacc447a68f2b1ca8b83f6802097435f369"
+    },
+    {
+      "path": "docs/SOURCES.md",
+      "destination": "docs/clayfarm/reference/SOURCES.md",
+      "source_sha256": "4e0503ace7f02cbdb99c235397c8873f3a079be7392aac7d7fbf36a455e18daf"
+    },
+    {
+      "path": "docs/WINDOWS_JOURNAL_V022.md",
+      "destination": "docs/clayfarm/reference/WINDOWS_JOURNAL_V022.md",
+      "source_sha256": "6bfdd0c8cd2419242275052ffd5a27f69f9a38b8eec0954fe900f07408a415db"
+    }
+  ]
+}

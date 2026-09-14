@@ -1,0 +1,9 @@
+{
+  "height_m": 0.65,
+  "target_triangles": 3000,
+  "material": {
+    "mode": "clay_single",
+    "color": [0.75, 0.2, 0.12, 1.0],
+    "roughness": 0.9
+  }
+}

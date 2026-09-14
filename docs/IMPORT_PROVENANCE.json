@@ -1,0 +1,91 @@
+{
+  "archive_sha256": "462eba8119cdc052c9920186b8f02cf9fe958004e12f4b7d21e9493c04c3bbe1",
+  "source_git_head": "33e3b8fb366a5d8f9cea0b93d387488e44fe5a0e",
+  "core_comparison": [
+    {
+      "path": "src/clayfarm/__init__.py",
+      "package_sha256": "cc6b08ad7b7287d88147ad65285c2993d2de698d32781f1295a5360a6fafbb8a",
+      "local_sha256": "cbdbd72a6de852f27e092730253c123eeefc70e218a792c90c9dcd80d6cce15d",
+      "different": true
+    },
+    {
+      "path": "src/clayfarm/__main__.py",
+      "package_sha256": "79ee6f134c5c5193377cf9b189cbdcc3e2095e49ba9cec310114441c15a917c4",
+      "local_sha256": "79ee6f134c5c5193377cf9b189cbdcc3e2095e49ba9cec310114441c15a917c4",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/blender_script.py",
+      "package_sha256": "7ebb1addf4ead365943efb7b39b8fbdd1f2a29777c97bf40cf02b2fbcc082870",
+      "local_sha256": "7ebb1addf4ead365943efb7b39b8fbdd1f2a29777c97bf40cf02b2fbcc082870",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/cli.py",
+      "package_sha256": "c7681b8c93f6a9820dff9178a218169f3ec35ede4009a2ccf207d5f9bdf9e7ed",
+      "local_sha256": "c7681b8c93f6a9820dff9178a218169f3ec35ede4009a2ccf207d5f9bdf9e7ed",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/executors.py",
+      "package_sha256": "b4dc36aea3b60165a35247db1130f3e142436b66d49da6021234901cef4e1834",
+      "local_sha256": "b4dc36aea3b60165a35247db1130f3e142436b66d49da6021234901cef4e1834",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/journal.py",
+      "package_sha256": "dd27924db27092ccc306b9a5422b9e4f6ce1b304fcc88badea8d1b38e807dc5e",
+      "local_sha256": "dd27924db27092ccc306b9a5422b9e4f6ce1b304fcc88badea8d1b38e807dc5e",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/local.py",
+      "package_sha256": "b8ab73f2a6da0516eaa94b2fcb8d0c8a9553c030f5bdb3e4eecec5604bc9cf39",
+      "local_sha256": "d31cbafb5aa186b37a4c5ca721e49fc812b67256e40a80efb841604a73de63fe",
+      "different": true
+    },
+    {
+      "path": "src/clayfarm/png.py",
+      "package_sha256": "79823f307958b46c637a67ac86a3892b9eda08d085ba403b518a011e0674000f",
+      "local_sha256": "79823f307958b46c637a67ac86a3892b9eda08d085ba403b518a011e0674000f",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/remote.py",
+      "package_sha256": "a0595bfc2a8cd61a4864ecbc9f08a557bb59874412dc3cf135830956b1fdfbf8",
+      "local_sha256": "a0595bfc2a8cd61a4864ecbc9f08a557bb59874412dc3cf135830956b1fdfbf8",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/resources.py",
+      "package_sha256": "cb679076bff03ba35a62da5362627e63a5293b9f9a48d92e23cbbad2122369fe",
+      "local_sha256": "cb679076bff03ba35a62da5362627e63a5293b9f9a48d92e23cbbad2122369fe",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/setup.py",
+      "package_sha256": "02aecfb06dde7d56e42fd3c787d1c23b6eb2d67dc4953aa26d09e6626c997de8",
+      "local_sha256": "02aecfb06dde7d56e42fd3c787d1c23b6eb2d67dc4953aa26d09e6626c997de8",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/spec.py",
+      "package_sha256": "28173a6c9feb3c9c864b1930ac57fa4c545e1f3c2496ff4032dd84fb50706c7d",
+      "local_sha256": "28173a6c9feb3c9c864b1930ac57fa4c545e1f3c2496ff4032dd84fb50706c7d",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/util.py",
+      "package_sha256": "5351aa7ebdc2e30a322e2b563336fd56b9bd1038982e94b7c8ba0a6e286371db",
+      "local_sha256": "5351aa7ebdc2e30a322e2b563336fd56b9bd1038982e94b7c8ba0a6e286371db",
+      "different": false
+    },
+    {
+      "path": "src/clayfarm/worker.py",
+      "package_sha256": "9ba7e3af712aaa017c30ebb67b464cfce30b78e0443aa431372e31f7ab7911b6",
+      "local_sha256": "9ba7e3af712aaa017c30ebb67b464cfce30b78e0443aa431372e31f7ab7911b6",
+      "different": false
+    }
+  ],
+  "policy": "Prefer current local ClayFarm core; no changes to source repository; no credentials copied."
+}
