@@ -6,11 +6,11 @@
 |---|---|
 | GitHub | MyKnow/clayfarm, Private, main. 첫 코드 커밋 d6192476b1b0455d49f2baffd1490fb9b87ce7ed 업로드 및 원격 SHA 일치 |
 | API 호스트 | MyKnow 홈서버. clayfarm-api-1 healthy, UID 10001, 읽기 전용 루트, 127.0.0.1:8765 |
-| API 코드·이미지 | 키체인 사전 점검 수정 d9841324d40c110e6de3caa7bb2622a3f509cc5a로 갱신. 이미지 ID sha256:49383f8a2447e2eafd9edf157bb138c4736052633c82f63c0a557d6728df1435. 2026-09-14 04:49 UTC 시작, healthy |
+| API 코드·이미지 | MFA 재개·등록 직후 검증 수정 4a1cc08ef7a4319d9b48ef003fdcaff3ae8ef6d1로 갱신. 이미지 ID sha256:b1e3b78b9787712035e76ee301c360c5488bf7cdce2a2e34b10ea1f27d3750cb. 2026-09-14 05:29 UTC 시작, healthy |
 | 운영 데이터 | 기존 ClayFarm Supabase 프로젝트와 private clayfarm bucket 유지 |
 | 중앙 DB 통합 | cf_control 초기화 후 clayfarm_control_queue_bridge 적용. 운영 migration 이력 20260914041144 |
 | 동일 큐 | 기존 farm에 바인딩. health의 queue_backend=public.cf_jobs/cf_tasks, parallel_queue_enabled=false |
-| 기존 데이터 보존 | job 17 / task 133 / attempt 117 / member 12 / Storage 객체 정보 201개 유지. 작업·실행 이력·멤버·Storage 내용 해시 일치 |
+| 기존 데이터 보존 | migration 시점 job 17 / task 133 / attempt 117 / member 12 / Storage 객체 정보 201개 유지. 작업·실행 이력·멤버·Storage 내용 해시 일치 |
 | 기존 워커 활동 | 계속 실행 중인 기존 워커의 last_seen·telemetry와 Auth updated_at은 정상 갱신됨. 해당 갱신을 덮어쓰지 않음 |
 | 서버 DB 권한 | 전용 clayfarm_api 역할. superuser/BYPASSRLS/DB 생성/역할 생성 불가, 작업 테이블 직접 INSERT 및 farm_binding UPDATE 불가 |
 | DB TLS | Supabase 공식 CA로 verify-full 연결. 인증서와 호스트 이름 검증 성공 |
@@ -30,9 +30,9 @@ CI 자동 실행은 아직 구성하지 않았다. Supabase 보안 진단에서 
 
 운영 public·clayfarm_private·auth·storage·supabase_migrations 스키마/데이터, 역할, HTTPS 설정과 Auth 설정을 백업했다. DB dump SHA256: 5610920e30d10b1628a70927ca4780b910e3b63102e1fef36edf8aec24e11e6d.
 
-별도 PostgreSQL에 복원한 뒤 같은 통합 migration을 실행하여 기존 8개 테이블의 행과 내용 해시가 변하지 않음을 확인했다. 복원 시험에서는 소유자를 정규화했고, Supabase 관리 플랫폼과 Storage 파일 본문까지 복원한 재해 복구 시험은 아니다. 운영 Storage 파일은 변경하지 않았다.
+별도 PostgreSQL에 복원한 뒤 같은 통합 migration을 실행하여 기존 8개 테이블의 행과 내용 해시가 변하지 않음을 확인했다. 복원 시험에서는 소유자를 정규화했고, Supabase 관리 플랫폼과 Storage 파일 본문까지 복원한 재해 복구 시험은 아니다. 기존 운영 Storage 파일은 보존했다. 이후 실제 작업 검증에서 새 입력·결과 객체를 추가했다.
 
-서버 백업: /srv/backups/clayfarm/preflight-20260914/ (root 전용). 서버 비밀 설정: /etc/myknow/secrets/clayfarm.env (root, 0600). 현재 실행 환경은 /opt/clayfarm/config-vault-20260914/deploy.env이며 해당 코드 release의 main·edge·TLS Compose 세 파일을 함께 사용한다. 이전 d619247 이미지와 /opt/clayfarm/config-candidate-20260914/ 설정도 복구용으로 보존했다. down -v나 큐 초기화를 사용하지 않는다.
+서버 백업: /srv/backups/clayfarm/preflight-20260914/ (root 전용). 서버 비밀 설정: /etc/myknow/secrets/clayfarm.env (root, 0600). 현재 실행 환경은 /opt/clayfarm/config-mfa-20260914/deploy.env이며 해당 코드 release의 main·edge·TLS Compose 세 파일을 함께 사용한다. 이전 d984132 이미지와 /opt/clayfarm/config-vault-20260914/, 최초 d619247 이미지와 /opt/clayfarm/config-candidate-20260914/ 설정도 복구용으로 보존했다. down -v나 큐 초기화를 사용하지 않는다.
 
 ## 실제 동일 큐·Storage 검증
 
